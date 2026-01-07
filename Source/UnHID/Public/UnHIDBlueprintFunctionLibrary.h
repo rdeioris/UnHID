@@ -206,8 +206,11 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Enumerate"), Category = "UnHID")
 	static TArray<FUnHIDDeviceInfo> UnHIDEnumerate();
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID UsagePage To String"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "UnHID UsagePage To String"), Category = "UnHID")
 	static FString UnHIDUsagePageToString(const int32 UsagePage);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "UnHID HexString to Int32"), Category = "UnHID")
+	static int32 UnHIDHexStringToInt32(const FString& HexString);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "UnHID Get hidapi Version"), Category = "UnHID")
 	static void UnHIDGetHidapiVersion(int32& Major, int32& Minor, int32& Patch);
@@ -227,6 +230,18 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Device"), Category = "UnHID")
 	static UUnHIDDevice* UnHIDOpenDevice(const FUnHIDDeviceInfo& UnHIDDeviceInfo, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, FString& ErrorMessage);
 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Device by Usage filter with HexStrings"), Category = "UnHID")
+	static UUnHIDDevice* UnHIDOpenDeviceByUsageFilter(const int32 UsagePage, const int32 Usage, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, FString& ErrorMessage);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Multiple Devices by Usage filter with HexStrings"), Category = "UnHID")
+	static TArray<UUnHIDDevice*> UnHIDOpenDevicesByUsageFilter(const int32 UsagePage, const int32 Usage, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, TArray<FString>& ErrorMessages);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Device by Usage filter with HexStrings"), Category = "UnHID")
+	static UUnHIDDevice* UnHIDOpenDeviceByUsageFilterHexStrings(const FString& UsagePageHexString, const FString& UsageHexString, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, FString& ErrorMessage);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Multiple Devices by Usage filter with HexStrings"), Category = "UnHID")
+	static TArray<UUnHIDDevice*> UnHIDOpenDevicesByUsageFilterHexStrings(const FString& UsagePageHexString, const FString& UsageHexString, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, TArray<FString>& ErrorMessages);
+
 	static UUnHIDDevice* UnHIDOpenDevice(const FUnHIDDeviceInfo& UnHIDDeviceInfo, const FUnHIDReadNativeDelegate& InUnHIDReadNativeDelegate, FString& ErrorMessage);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Reports from Report Descriptor Bytes"), Category = "UnHID")
@@ -238,10 +253,10 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Bitmask from Bytes"), Category = "UnHID")
 	static TArray<bool> UnHIDParseBitmaskFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset, const int64 BitSize);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Integer from Bytes"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Unsigned Integer from Bytes"), Category = "UnHID")
 	static int64 UnHIDParseUnsignedIntegerFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset, const int64 BitSize);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Integer from Bytes"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Signed Integer from Bytes"), Category = "UnHID")
 	static int64 UnHIDParseSignedIntegerFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset, const int64 BitSize);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Analog from Bytes"), Category = "UnHID")

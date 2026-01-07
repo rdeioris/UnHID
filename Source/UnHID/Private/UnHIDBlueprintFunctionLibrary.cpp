@@ -234,6 +234,50 @@ UUnHIDDevice* UUnHIDBlueprintFunctionLibrary::UnHIDOpenDevice(const FUnHIDDevice
 	return UnHIDDevice;
 }
 
+UUnHIDDevice* UUnHIDBlueprintFunctionLibrary::UnHIDOpenDeviceByUsageFilter(const int32 UsagePage, const int32 Usage, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, FString& ErrorMessage)
+{
+	for (const FUnHIDDeviceInfo& UnHIDDeviceInfo : UnHIDEnumerate())
+	{
+		if (UnHIDDeviceInfo.UsagePage == UsagePage && UnHIDDeviceInfo.Usage == Usage)
+		{
+			return UnHIDOpenDevice(UnHIDDeviceInfo, InUnHIDReadDynamicDelegate, ErrorMessage);
+		}
+	}
+
+	return nullptr;
+}
+
+TArray<UUnHIDDevice*> UUnHIDBlueprintFunctionLibrary::UnHIDOpenDevicesByUsageFilter(const int32 UsagePage, const int32 Usage, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, TArray<FString>& ErrorMessages)
+{
+	TArray<UUnHIDDevice*> UnHIDDevices;
+
+	for (const FUnHIDDeviceInfo& UnHIDDeviceInfo : UnHIDEnumerate())
+	{
+		if (UnHIDDeviceInfo.UsagePage == UsagePage && UnHIDDeviceInfo.Usage == Usage)
+		{
+			FString ErrorMessage;
+			UUnHIDDevice* UnHIDDevice = UnHIDOpenDevice(UnHIDDeviceInfo, InUnHIDReadDynamicDelegate, ErrorMessage);
+			if (!UnHIDDevice)
+			{
+				ErrorMessages.Add(ErrorMessage);
+			}
+			UnHIDDevices.Add(UnHIDDevice);
+		}
+	}
+
+	return UnHIDDevices;
+}
+
+UUnHIDDevice* UUnHIDBlueprintFunctionLibrary::UnHIDOpenDeviceByUsageFilterHexStrings(const FString& UsagePageHexString, const FString& UsageHexString, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, FString& ErrorMessage)
+{
+	return UnHIDOpenDeviceByUsageFilter(UnHIDHexStringToInt32(UsagePageHexString), UnHIDHexStringToInt32(UsageHexString), InUnHIDReadDynamicDelegate, ErrorMessage);
+}
+
+TArray<UUnHIDDevice*> UUnHIDBlueprintFunctionLibrary::UnHIDOpenDevicesByUsageFilterHexStrings(const FString& UsagePageHexString, const FString& UsageHexString, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, TArray<FString>& ErrorMessages)
+{
+	return UnHIDOpenDevicesByUsageFilter(UnHIDHexStringToInt32(UsagePageHexString), UnHIDHexStringToInt32(UsageHexString), InUnHIDReadDynamicDelegate, ErrorMessages);
+}
+
 UUnHIDDevice* UUnHIDBlueprintFunctionLibrary::UnHIDOpenDevice(const FUnHIDDeviceInfo& UnHIDDeviceInfo, const FUnHIDReadNativeDelegate& InUnHIDReadNativeDelegate, FString& ErrorMessage)
 {
 	UUnHIDDevice* UnHIDDevice = NewObject<UUnHIDDevice>();
@@ -320,6 +364,17 @@ TArray<uint8> UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToBytes(const FStrin
 	}
 
 	return OutputBytes;
+}
+
+int32 UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(const FString& HexString)
+{
+	TArray<uint8> Bytes = UnHIDHexStringToBytes(HexString);
+	if (Bytes.Num() < 4)
+	{
+		Bytes.AddZeroed(4 - Bytes.Num());
+	}
+
+	return *(reinterpret_cast<const int32*>(Bytes.GetData()));
 }
 
 FUnHIDDeviceDescriptorReports UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFromReportDescriptorBytes(const TArray<uint8>& UnHIDReportDescriptorBytes, FString& ErrorMessage)
