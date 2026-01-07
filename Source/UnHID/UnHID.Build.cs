@@ -39,7 +39,8 @@ public class UnHID : ModuleRules
                 "Engine",
                 "InputDevice",
                 "InputCore",
-                "ApplicationCore"
+                "ApplicationCore",
+                "Hidapi"
 				// ... add private dependencies that you statically link with here ...	
 			}
             );
@@ -51,10 +52,5 @@ public class UnHID : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
             );
-
-        if (Target.Platform == UnrealTargetPlatform.Win64)
-        {
-            PublicDefinitions.Add("hidapi_winapi_EXPORTS=1");
-        }
     }
 }
