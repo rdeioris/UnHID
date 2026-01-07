@@ -11,5 +11,15 @@ public class Hidapi : ModuleRules
         {
             PublicDefinitions.Add("hidapi_winapi_EXPORTS=1");
         }
+        else if (Target.Platform == UnrealTargetPlatform.Mac)
+        {
+            PublicDefinitions.Add("HID_API_EXPORT=__attribute__((visibility(\"default\")))");
+            PublicFrameworks.AddRange(
+                new string[] {
+                    "IOKit",
+                    "CoreFoundation"
+                }
+            );
+        }
     }
 }
