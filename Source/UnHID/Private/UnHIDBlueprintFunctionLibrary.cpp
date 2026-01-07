@@ -611,7 +611,24 @@ void UUnHIDBlueprintFunctionLibrary::UnHIDSetVitualInputDeviceAxis(const int32 C
 
 TArray<bool> UUnHIDBlueprintFunctionLibrary::UnHIDParseBitmaskFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset, const int64 BitSize)
 {
-	return {};
+	TArray<bool> Bitmask;
+
+	for (int64 Index = 0; Index < BitSize; Index++)
+	{
+		const uint64 BitIndex = BitOffset + Index;
+		const uint64 ByteIndex = BitIndex / 8;
+		const uint64 BitInByte = BitIndex % 8;
+
+		if (!Bytes.IsValidIndex(ByteIndex))
+		{
+			break;
+		}
+
+		const uint8 Bit = (Bytes[ByteIndex] >> BitInByte) & 1;
+		Bitmask.Add(Bit == 1);
+	}
+
+	return Bitmask;
 }
 
 int64 UUnHIDBlueprintFunctionLibrary::UnHIDParseUnsignedIntegerFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset, const int64 BitSize)
@@ -628,6 +645,11 @@ int64 UUnHIDBlueprintFunctionLibrary::UnHIDParseUnsignedIntegerFromBytes(const T
 		const uint64 BitIndex = BitOffset + Index;
 		const uint64 ByteIndex = BitIndex / 8;
 		const uint64 BitInByte = BitIndex % 8;
+
+		if (!Bytes.IsValidIndex(ByteIndex))
+		{
+			break;
+		}
 
 		const uint64 Bit = (Bytes[ByteIndex] >> BitInByte) & 1;
 		Value |= (Bit << Index);
