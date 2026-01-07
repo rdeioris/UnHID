@@ -483,6 +483,28 @@ class SUnHIDDashboard : public SCompoundWidget
 		HIDDeviceInfos.Empty();
 
 		TArray<FUnHIDDeviceInfo> DeviceInfos = UUnHIDBlueprintFunctionLibrary::UnHIDEnumerate();
+        
+        // fix serial number, manufacturer and product (if required)
+        for (FUnHIDDeviceInfo& DeviceInfo : DeviceInfos)
+        {
+            FString IgnoredErrorMessage;
+            
+            if (DeviceInfo.SerialNumber.IsEmpty())
+            {
+                DeviceInfo.SerialNumber = UUnHIDBlueprintFunctionLibrary::UnHIDGetSerialNumberString(DeviceInfo, IgnoredErrorMessage);
+            }
+            
+            if (DeviceInfo.Manufacturer.IsEmpty())
+            {
+                DeviceInfo.Manufacturer = UUnHIDBlueprintFunctionLibrary::UnHIDGetManufacturerString(DeviceInfo, IgnoredErrorMessage);
+            }
+            
+            if (DeviceInfo.Product.IsEmpty())
+            {
+                DeviceInfo.Product = UUnHIDBlueprintFunctionLibrary::UnHIDGetProductString(DeviceInfo, IgnoredErrorMessage);
+            }
+        }
+        
 
 		for (const FUnHIDDeviceInfo& DeviceInfo : DeviceInfos)
 		{
@@ -490,6 +512,7 @@ class SUnHIDDashboard : public SCompoundWidget
 			TArray<uint8> ReportDescriptor = UUnHIDBlueprintFunctionLibrary::UnHIDGetReportDescriptor(DeviceInfo, ErrorMessage);
 			TSharedRef<FUnHIDEditorDeviceInfo> EditorDeviceInfoRef = MakeShared<FUnHIDEditorDeviceInfo>();
 			EditorDeviceInfoRef->DeviceInfo = DeviceInfo;
+            
 			if (ReportDescriptor.IsEmpty())
 			{
 				EditorDeviceInfoRef->ReportDescriptor = FString::Printf(TEXT("Error: %s"), *ErrorMessage);

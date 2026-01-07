@@ -218,7 +218,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "UnHID Get hidapi Version String"), Category = "UnHID")
 	static FString UnHIDGetHidapiVersionString();
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "UnHID Get Report Descriptor"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Report Descriptor"), Category = "UnHID")
 	static TArray<uint8> UnHIDGetReportDescriptor(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "UnHID Bytes to HexString"), Category = "UnHID")
@@ -261,4 +261,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Analog from Bytes"), Category = "UnHID")
 	static float UnHIDParseAnalogFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset, const int64 BitSize, const int64 Minimum, const int64 Maximum, const float AnalogMin = -1, const float AnalogMax = 1);
+    
+    UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Serial Number String"), Category = "UnHID")
+    static FString UnHIDGetSerialNumberString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage);
+    
+    UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Manufacturer String"), Category = "UnHID")
+    static FString UnHIDGetManufacturerString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage);
+    
+    UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Product String"), Category = "UnHID")
+    static FString UnHIDGetProductString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage);
 };

@@ -253,3 +253,24 @@ bool UUnHIDDevice::SetFeatureReportHexString(const FString& HexString, FString& 
 {
 	return SetFeatureReportBytes(UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToBytes(HexString), ErrorMessage);
 }
+
+FString UUnHIDDevice::GetSerialNumberString(FString& ErrorMessage)
+{
+    if (!HidDevice)
+    {
+        ErrorMessage = "Invalid HidDevice";
+        return "";
+    }
+    
+    TArray<wchar_t> SerialNumberBuffer;
+    SerialNumberBuffer.AddZeroed(256);
+    
+    int32 Result = hid_get_serial_number_string(reinterpret_cast<hid_device*>(HidDevice), SerialNumberBuffer.GetData(), 256);
+    if (Result < 0)
+    {
+        ErrorMessage = WCHAR_TO_TCHAR(hid_error(reinterpret_cast<hid_device*>(HidDevice)));
+        return "";
+    }
+    
+    return WCHAR_TO_TCHAR(SerialNumberBuffer.GetData());
+}

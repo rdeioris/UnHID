@@ -41,6 +41,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Set Feature Report HexString"), Category = "UnHID")
 	bool SetFeatureReportHexString(const FString& HexString, FString& ErrorMessage);
+    
+    UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Get Serial Number String"), Category = "UnHID")
+    FString GetSerialNumberString(FString& ErrorMessage);
 
 protected:
 	void* HidDevice = nullptr;
