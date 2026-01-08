@@ -351,3 +351,16 @@ FUnHIDDeviceInfo UUnHIDDevice::GetDeviceInfo() const
 
 	return FUnHIDDeviceInfo();
 }
+
+bool UUnHIDDevice::GetBitOffsetAndSizeFromDescriptorReportsAndUsage(const int32 UsagePage, const int32 Usage, int64& BitOffset, int64& BitSize, FString& ErrorMessage)
+{
+	if (!ReportDescriptor.IsValid())
+	{
+		ErrorMessage = "Invalid Report Descriptor";
+		return false;
+	}
+
+	const FUnHIDDeviceDescriptorReports DescriptorReports = UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFromReportDescriptorBytes(*ReportDescriptor, ErrorMessage);
+
+	return UUnHIDBlueprintFunctionLibrary::UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndUsage(DescriptorReports.Inputs, UsagePage, Usage, BitOffset, BitSize);
+}

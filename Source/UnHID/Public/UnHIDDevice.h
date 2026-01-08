@@ -106,6 +106,9 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "UnHIDDevice Get Device Info"), Category = "UnHID")
     FUnHIDDeviceInfo GetDeviceInfo() const;
 
+    UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Get BitOffset and BitSize from DescriptorReports and Usage"), Category = "UnHID")
+    bool GetBitOffsetAndSizeFromDescriptorReportsAndUsage(const int32 UsagePage, const int32 Usage, int64& BitOffset, int64& BitSize, FString& ErrorMessage);
+
 protected:
 	void* HidDevice = nullptr;
 

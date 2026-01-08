@@ -3,7 +3,6 @@
 #include "UnHIDEditor.h"
 #include "Editor/WorkspaceMenuStructure/Public/WorkspaceMenuStructure.h"
 #include "Editor/WorkspaceMenuStructure/Public/WorkspaceMenuStructureModule.h"
-#include "Framework/Application/IInputProcessor.h"
 #include "Interfaces/IPluginManager.h"
 #include "LevelEditor.h"
 #include "SLevelViewport.h"
@@ -1007,63 +1006,6 @@ protected:
 	TSharedPtr<SVerticalBox> UsagePageUsages = nullptr;
 };
 
-class FUnHIDInputProcessor : public IInputProcessor
-{
-public:
-	bool HandleAnalogInputEvent(FSlateApplication& SlateApp, const FAnalogInputEvent& InAnalogInputEvent) override
-	{
-		if (InAnalogInputEvent.GetKey().GetFName().ToString().StartsWith("UnHID_Axis"))
-		{
-			FLevelEditorModule& LevelEditorModule = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
-			TWeakPtr<SViewport> ViewportWidget = LevelEditorModule.GetFirstActiveViewport()->GetViewportWidget();
-			if (ViewportWidget.IsValid())
-			{
-				ViewportWidget.Pin()->OnAnalogValueChanged(ViewportWidget.Pin()->GetCachedGeometry(), InAnalogInputEvent);
-				return true;
-			}
-		}
-		
-		return false;
-	}
-
-	bool HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent) override
-	{
-		if (InKeyEvent.GetKey().GetFName().ToString().StartsWith("UnHID_Button"))
-		{
-			FLevelEditorModule& LevelEditorModule = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
-			TWeakPtr<SViewport> ViewportWidget = LevelEditorModule.GetFirstActiveViewport()->GetViewportWidget();
-			if (ViewportWidget.IsValid())
-			{
-				ViewportWidget.Pin()->OnKeyDown(ViewportWidget.Pin()->GetCachedGeometry(), InKeyEvent);
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	bool HandleKeyUpEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
-	{
-		if (InKeyEvent.GetKey().GetFName().ToString().StartsWith("UnHID_Button"))
-		{
-			FLevelEditorModule& LevelEditorModule = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
-			TWeakPtr<SViewport> ViewportWidget = LevelEditorModule.GetFirstActiveViewport()->GetViewportWidget();
-			if (ViewportWidget.IsValid())
-			{
-				ViewportWidget.Pin()->OnKeyUp(ViewportWidget.Pin()->GetCachedGeometry(), InKeyEvent);
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	void Tick(const float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICursor> Cursor) override
-	{
-
-	}
-};
-
 class SUnHIDVirtualInputConsole : public SCompoundWidget
 {
 	SLATE_BEGIN_ARGS(SUnHIDVirtualInputConsole)
@@ -1087,8 +1029,10 @@ class SUnHIDVirtualInputConsole : public SCompoundWidget
 		{
 			FSlateApplication::Get().UnregisterInputPreProcessor(InputPreProcessor);
 		}
-		
-		InputPreProcessor = MakeShared<FUnHIDInputProcessor>();
+
+		TWeakPtr<SUnHIDVirtualInputConsole> WeakPtr = SharedThis(this);
+
+		InputPreProcessor = MakeShared<FUnHIDInputProcessor>(WeakPtr);
 
 		FSlateApplication::Get().RegisterInputPreProcessor(InputPreProcessor);
 
@@ -1207,6 +1151,13 @@ class SUnHIDVirtualInputConsole : public SCompoundWidget
 											]
 									]
 							]
+						+ SVerticalBox::Slot().AutoHeight()
+							[
+								SNew(SBorder).Padding(8)
+									[
+										SAssignNew(SnapshotsLog, SMultiLineEditableTextBox)
+									]
+							]
 					]
 			];
 	}
@@ -1240,6 +1191,31 @@ class SUnHIDVirtualInputConsole : public SCompoundWidget
 		return FReply::Handled();
 	}
 
+	void UpdateAxisSnapshotMap(const FName KeyName, const float Value)
+	{
+		if (AxisSnapshotMap.Contains(KeyName))
+		{
+			AxisSnapshotMap[KeyName] = Value;
+		}
+		else
+		{
+			AxisSnapshotKeys.Add(KeyName);
+			AxisSnapshotMap.Add(KeyName, Value);
+		}
+
+		if (SnapshotsLog.IsValid())
+		{
+			FString Log;
+
+			for (const FName AxisKeyName : AxisSnapshotKeys)
+			{
+				Log += FString::Printf(TEXT("%s: %f\n"), *AxisKeyName.ToString(), AxisSnapshotMap[AxisKeyName]);
+			}
+
+			SnapshotsLog->SetText(FText::FromString(Log.LeftChop(1)));
+		}
+	}
+
 protected:
 
 	TSharedPtr<SEditableTextBox> AxisAxisIdInput;
@@ -1249,7 +1225,74 @@ protected:
 	TSharedPtr<SEditableTextBox> ButtonControllerIdInput;
 
 	TSharedPtr<IInputProcessor> InputPreProcessor = nullptr;
+
+	TArray<FName> AxisSnapshotKeys;
+	TMap<FName, float> AxisSnapshotMap;
+
+	TSharedPtr<SMultiLineEditableTextBox> SnapshotsLog;
 };
+
+FUnHIDInputProcessor::FUnHIDInputProcessor(TWeakPtr<SUnHIDVirtualInputConsole> InUnHIDVirtualInputConsole)
+{
+	UnHIDVirtualInputConsole = InUnHIDVirtualInputConsole;
+}
+
+bool FUnHIDInputProcessor::HandleAnalogInputEvent(FSlateApplication& SlateApp, const FAnalogInputEvent& InAnalogInputEvent)
+{
+	if (InAnalogInputEvent.GetKey().GetFName().ToString().StartsWith("UnHID_Axis"))
+	{
+		FLevelEditorModule& LevelEditorModule = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
+		TWeakPtr<SViewport> ViewportWidget = LevelEditorModule.GetFirstActiveViewport()->GetViewportWidget();
+		if (ViewportWidget.IsValid())
+		{
+			ViewportWidget.Pin()->OnAnalogValueChanged(ViewportWidget.Pin()->GetCachedGeometry(), InAnalogInputEvent);
+			if (UnHIDVirtualInputConsole.IsValid())
+			{
+				UnHIDVirtualInputConsole.Pin()->UpdateAxisSnapshotMap(InAnalogInputEvent.GetKey().GetFName(), InAnalogInputEvent.GetAnalogValue());
+			}
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool FUnHIDInputProcessor::HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
+{
+	if (InKeyEvent.GetKey().GetFName().ToString().StartsWith("UnHID_Button"))
+	{
+		FLevelEditorModule& LevelEditorModule = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
+		TWeakPtr<SViewport> ViewportWidget = LevelEditorModule.GetFirstActiveViewport()->GetViewportWidget();
+		if (ViewportWidget.IsValid())
+		{
+			ViewportWidget.Pin()->OnKeyDown(ViewportWidget.Pin()->GetCachedGeometry(), InKeyEvent);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool FUnHIDInputProcessor::HandleKeyUpEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
+{
+	if (InKeyEvent.GetKey().GetFName().ToString().StartsWith("UnHID_Button"))
+	{
+		FLevelEditorModule& LevelEditorModule = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
+		TWeakPtr<SViewport> ViewportWidget = LevelEditorModule.GetFirstActiveViewport()->GetViewportWidget();
+		if (ViewportWidget.IsValid())
+		{
+			ViewportWidget.Pin()->OnKeyUp(ViewportWidget.Pin()->GetCachedGeometry(), InKeyEvent);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void FUnHIDInputProcessor::Tick(const float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICursor> Cursor)
+{
+
+}
 
 TSharedRef<SDockTab> FUnHIDEditorModule::CreateUnHIDDashboard(const FSpawnTabArgs& Args)
 {
