@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright 2026 - Roberto De Ioris
 
 #pragma once
 
@@ -157,6 +157,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "UnHID HexString to Int32"), Category = "UnHID")
 	static int32 UnHIDHexStringToInt32(const FString& HexString);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "UnHID Int32 to HexString"), Category = "UnHID")
+	static FString UnHIDInt32ToHexString(const int32 Value);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "UnHID Get hidapi Version"), Category = "UnHID")
 	static void UnHIDGetHidapiVersion(int32& Major, int32& Minor, int32& Patch);
 
@@ -215,4 +218,7 @@ public:
     
     UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Product String"), Category = "UnHID")
     static FString UnHIDGetProductString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Reports from Report Descriptor Bytes"), Category = "UnHID")
+	static bool UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage, int64& BitOffset, int64& BitSize);
 };

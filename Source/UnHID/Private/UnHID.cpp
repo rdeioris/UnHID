@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright 2026 - Roberto De Ioris
 
 #include "UnHID.h"
 
@@ -55,14 +55,14 @@ protected:
 #if PLATFORM_MAC
 extern "C"
 {
-    void hid_darwin_set_open_exclusive(int32 OpenExclusive);
+	void hid_darwin_set_open_exclusive(int32 OpenExclusive);
 }
 #endif
 
 void FUnHIDModule::StartupModule()
 {
 #if PLATFORM_MAC
-    hid_darwin_set_open_exclusive(0);
+	hid_darwin_set_open_exclusive(0);
 #endif
 	IInputDeviceModule::StartupModule();
 

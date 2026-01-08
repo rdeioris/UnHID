@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright 2026 - Roberto De Ioris
 
 #pragma once
 
@@ -14,4 +14,5 @@ public:
 
 private:
 	static TSharedRef<SDockTab> CreateUnHIDDashboard(const FSpawnTabArgs& Args);
+	static TSharedRef<SDockTab> CreateUnHIDHUT(const FSpawnTabArgs& Args);
 };

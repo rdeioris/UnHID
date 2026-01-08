@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright 2026 - Roberto De Ioris
 
 
 #include "UnHIDDevice.h"
@@ -11,38 +11,38 @@ THIRD_PARTY_INCLUDES_END
 
 EUnHIDBusType UnHID::ToUnHIDBusType(const int32 BusType)
 {
-    switch (BusType)
-    {
-    case HID_API_BUS_USB:
-        return EUnHIDBusType::USB;
-    case HID_API_BUS_BLUETOOTH:
-        return EUnHIDBusType::Bluetooth;
-    case HID_API_BUS_I2C:
-        return EUnHIDBusType::I2C;
-    case HID_API_BUS_SPI:
-        return EUnHIDBusType::SPI;
-    case HID_API_BUS_VIRTUAL:
-        return EUnHIDBusType::Virtual;
-    default:
-        break;
-    }
+	switch (BusType)
+	{
+	case HID_API_BUS_USB:
+		return EUnHIDBusType::USB;
+	case HID_API_BUS_BLUETOOTH:
+		return EUnHIDBusType::Bluetooth;
+	case HID_API_BUS_I2C:
+		return EUnHIDBusType::I2C;
+	case HID_API_BUS_SPI:
+		return EUnHIDBusType::SPI;
+	case HID_API_BUS_VIRTUAL:
+		return EUnHIDBusType::Virtual;
+	default:
+		break;
+	}
 
-    return EUnHIDBusType::Unknown;
+	return EUnHIDBusType::Unknown;
 }
 
 void UnHID::FillDeviceInfo(const hid_device_info* CurrentDev, FUnHIDDeviceInfo& UnHIDDeviceInfo)
 {
-    UnHIDDeviceInfo.Path = UTF8_TO_TCHAR(CurrentDev->path);
-    UnHIDDeviceInfo.VendorId = CurrentDev->vendor_id;
-    UnHIDDeviceInfo.ProductId = CurrentDev->product_id;
-    UnHIDDeviceInfo.SerialNumber = WCHAR_TO_TCHAR(CurrentDev->serial_number);
-    UnHIDDeviceInfo.ReleaseNumber = CurrentDev->release_number;
-    UnHIDDeviceInfo.Manufacturer = WCHAR_TO_TCHAR(CurrentDev->manufacturer_string);
-    UnHIDDeviceInfo.Product = WCHAR_TO_TCHAR(CurrentDev->product_string);
-    UnHIDDeviceInfo.UsagePage = CurrentDev->usage_page;
-    UnHIDDeviceInfo.Usage = CurrentDev->usage;
-    UnHIDDeviceInfo.InterfaceNumber = CurrentDev->interface_number;
-    UnHIDDeviceInfo.BusType = UnHID::ToUnHIDBusType(CurrentDev->bus_type);
+	UnHIDDeviceInfo.Path = UTF8_TO_TCHAR(CurrentDev->path);
+	UnHIDDeviceInfo.VendorId = CurrentDev->vendor_id;
+	UnHIDDeviceInfo.ProductId = CurrentDev->product_id;
+	UnHIDDeviceInfo.SerialNumber = WCHAR_TO_TCHAR(CurrentDev->serial_number);
+	UnHIDDeviceInfo.ReleaseNumber = CurrentDev->release_number;
+	UnHIDDeviceInfo.Manufacturer = WCHAR_TO_TCHAR(CurrentDev->manufacturer_string);
+	UnHIDDeviceInfo.Product = WCHAR_TO_TCHAR(CurrentDev->product_string);
+	UnHIDDeviceInfo.UsagePage = CurrentDev->usage_page;
+	UnHIDDeviceInfo.Usage = CurrentDev->usage;
+	UnHIDDeviceInfo.InterfaceNumber = CurrentDev->interface_number;
+	UnHIDDeviceInfo.BusType = UnHID::ToUnHIDBusType(CurrentDev->bus_type);
 }
 
 class FUnHIDDeviceWorkerThread : public FRunnable
@@ -163,27 +163,27 @@ bool UUnHIDDevice::Initialize(const FUnHIDDeviceInfo& UnHIDDeviceInfo, const FUn
 		ErrorMessage = WCHAR_TO_TCHAR(hid_error(nullptr));
 		return false;
 	}
-    
-    ReportDescriptor = MakeShared<TArray<uint8>>();
-    ReportDescriptor->AddUninitialized(HID_API_MAX_REPORT_DESCRIPTOR_SIZE);
 
-    const int32 ReportDescriptorSize = hid_get_report_descriptor(reinterpret_cast<hid_device*>(HidDevice), ReportDescriptor->GetData(), ReportDescriptor->Num());
+	ReportDescriptor = MakeShared<TArray<uint8>>();
+	ReportDescriptor->AddUninitialized(HID_API_MAX_REPORT_DESCRIPTOR_SIZE);
 
-    if (ReportDescriptorSize > 0)
-    {
-        ReportDescriptor->SetNum(ReportDescriptorSize);
-    }
-    else
-    {
-        ReportDescriptor = nullptr;
-    }
-    
-    hid_device_info* HidDeviceInfo = hid_get_device_info(reinterpret_cast<hid_device*>(HidDevice));
-    if (HidDeviceInfo)
-    {
-        DeviceInfo = MakeShared<FUnHIDDeviceInfo>();
-        UnHID::FillDeviceInfo(HidDeviceInfo, *DeviceInfo);
-    }
+	const int32 ReportDescriptorSize = hid_get_report_descriptor(reinterpret_cast<hid_device*>(HidDevice), ReportDescriptor->GetData(), ReportDescriptor->Num());
+
+	if (ReportDescriptorSize > 0)
+	{
+		ReportDescriptor->SetNum(ReportDescriptorSize);
+	}
+	else
+	{
+		ReportDescriptor = nullptr;
+	}
+
+	hid_device_info* HidDeviceInfo = hid_get_device_info(reinterpret_cast<hid_device*>(HidDevice));
+	if (HidDeviceInfo)
+	{
+		DeviceInfo = MakeShared<FUnHIDDeviceInfo>();
+		UnHID::FillDeviceInfo(HidDeviceInfo, *DeviceInfo);
+	}
 
 	UnHIDDeviceWorkerThread = new FUnHIDDeviceWorkerThread(TWeakObjectPtr<UUnHIDDevice>(this), reinterpret_cast<hid_device*>(HidDevice), InReadNativeDelegate);
 
@@ -313,41 +313,41 @@ bool UUnHIDDevice::SetFeatureReportHexString(const FString& HexString, FString& 
 
 FString UUnHIDDevice::GetSerialNumberString(FString& ErrorMessage)
 {
-    if (!HidDevice)
-    {
-        ErrorMessage = "Invalid HidDevice";
-        return "";
-    }
-    
-    TArray<wchar_t> SerialNumberBuffer;
-    SerialNumberBuffer.AddZeroed(256);
-    
-    int32 Result = hid_get_serial_number_string(reinterpret_cast<hid_device*>(HidDevice), SerialNumberBuffer.GetData(), 256);
-    if (Result < 0)
-    {
-        ErrorMessage = WCHAR_TO_TCHAR(hid_error(reinterpret_cast<hid_device*>(HidDevice)));
-        return "";
-    }
-    
-    return WCHAR_TO_TCHAR(SerialNumberBuffer.GetData());
+	if (!HidDevice)
+	{
+		ErrorMessage = "Invalid HidDevice";
+		return "";
+	}
+
+	TArray<wchar_t> SerialNumberBuffer;
+	SerialNumberBuffer.AddZeroed(256);
+
+	int32 Result = hid_get_serial_number_string(reinterpret_cast<hid_device*>(HidDevice), SerialNumberBuffer.GetData(), 256);
+	if (Result < 0)
+	{
+		ErrorMessage = WCHAR_TO_TCHAR(hid_error(reinterpret_cast<hid_device*>(HidDevice)));
+		return "";
+	}
+
+	return WCHAR_TO_TCHAR(SerialNumberBuffer.GetData());
 }
 
 TArray<uint8> UUnHIDDevice::GetReportDescriptor() const
 {
-    if (ReportDescriptor.IsValid())
-    {
-        return *ReportDescriptor;
-    }
-   
-    return TArray<uint8>();
+	if (ReportDescriptor.IsValid())
+	{
+		return *ReportDescriptor;
+	}
+
+	return TArray<uint8>();
 }
 
 FUnHIDDeviceInfo UUnHIDDevice::GetDeviceInfo() const
 {
-    if (DeviceInfo.IsValid())
-    {
-        return *DeviceInfo;
-    }
-   
-    return FUnHIDDeviceInfo();
+	if (DeviceInfo.IsValid())
+	{
+		return *DeviceInfo;
+	}
+
+	return FUnHIDDeviceInfo();
 }

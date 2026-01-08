@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright 2026 - Roberto De Ioris
 
 
 #include "UnHIDBlueprintFunctionLibrary.h"
@@ -19,9 +19,9 @@ TArray<FUnHIDDeviceInfo> UUnHIDBlueprintFunctionLibrary::UnHIDEnumerate()
 	for (struct hid_device_info* CurrentDev = Devs; CurrentDev; CurrentDev = CurrentDev->next)
 	{
 		FUnHIDDeviceInfo DeviceInfo;
-		
-        UnHID::FillDeviceInfo(CurrentDev, DeviceInfo);
-        
+
+		UnHID::FillDeviceInfo(CurrentDev, DeviceInfo);
+
 		DeviceInfos.Add(MoveTemp(DeviceInfo));
 	}
 
@@ -174,98 +174,98 @@ TArray<uint8> UUnHIDBlueprintFunctionLibrary::UnHIDGetReportDescriptor(const FUn
 
 FString UUnHIDBlueprintFunctionLibrary::UnHIDGetSerialNumberString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage)
 {
-    if (UnHIDDeviceInfo.Path.IsEmpty())
-    {
-        ErrorMessage = "Empty UnHIDDeviceInfo Path";
-        return "";
-    }
+	if (UnHIDDeviceInfo.Path.IsEmpty())
+	{
+		ErrorMessage = "Empty UnHIDDeviceInfo Path";
+		return "";
+	}
 
-    hid_device* HidDevice = hid_open_path(TCHAR_TO_UTF8(*UnHIDDeviceInfo.Path));
-    if (!HidDevice)
-    {
-        ErrorMessage = WCHAR_TO_TCHAR(hid_error(nullptr));
-        return "";
-    }
-    
-    TArray<wchar_t> SerialNumberBuffer;
-    SerialNumberBuffer.AddZeroed(256);
-    
-    int32 Result = hid_get_serial_number_string(reinterpret_cast<hid_device*>(HidDevice), SerialNumberBuffer.GetData(), 256);
-    if (Result < 0)
-    {
-        ErrorMessage = WCHAR_TO_TCHAR(hid_error(reinterpret_cast<hid_device*>(HidDevice)));
-        return "";
-    }
-    
-    const FString SerialNumberString = WCHAR_TO_TCHAR(SerialNumberBuffer.GetData());
-    
-    hid_close(HidDevice);
-    
-    return SerialNumberString;
+	hid_device* HidDevice = hid_open_path(TCHAR_TO_UTF8(*UnHIDDeviceInfo.Path));
+	if (!HidDevice)
+	{
+		ErrorMessage = WCHAR_TO_TCHAR(hid_error(nullptr));
+		return "";
+	}
+
+	TArray<wchar_t> SerialNumberBuffer;
+	SerialNumberBuffer.AddZeroed(256);
+
+	int32 Result = hid_get_serial_number_string(reinterpret_cast<hid_device*>(HidDevice), SerialNumberBuffer.GetData(), 256);
+	if (Result < 0)
+	{
+		ErrorMessage = WCHAR_TO_TCHAR(hid_error(reinterpret_cast<hid_device*>(HidDevice)));
+		return "";
+	}
+
+	const FString SerialNumberString = WCHAR_TO_TCHAR(SerialNumberBuffer.GetData());
+
+	hid_close(HidDevice);
+
+	return SerialNumberString;
 }
 
 FString UUnHIDBlueprintFunctionLibrary::UnHIDGetManufacturerString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage)
 {
-    if (UnHIDDeviceInfo.Path.IsEmpty())
-    {
-        ErrorMessage = "Empty UnHIDDeviceInfo Path";
-        return "";
-    }
+	if (UnHIDDeviceInfo.Path.IsEmpty())
+	{
+		ErrorMessage = "Empty UnHIDDeviceInfo Path";
+		return "";
+	}
 
-    hid_device* HidDevice = hid_open_path(TCHAR_TO_UTF8(*UnHIDDeviceInfo.Path));
-    if (!HidDevice)
-    {
-        ErrorMessage = WCHAR_TO_TCHAR(hid_error(nullptr));
-        return "";
-    }
-    
-    TArray<wchar_t> ManufacturerBuffer;
-    ManufacturerBuffer.AddZeroed(256);
-    
-    int32 Result = hid_get_manufacturer_string(reinterpret_cast<hid_device*>(HidDevice), ManufacturerBuffer.GetData(), 256);
-    if (Result < 0)
-    {
-        ErrorMessage = WCHAR_TO_TCHAR(hid_error(reinterpret_cast<hid_device*>(HidDevice)));
-        return "";
-    }
-    
-    const FString ManufacturerString = WCHAR_TO_TCHAR(ManufacturerBuffer.GetData());
-    
-    hid_close(HidDevice);
-    
-    return ManufacturerString;
+	hid_device* HidDevice = hid_open_path(TCHAR_TO_UTF8(*UnHIDDeviceInfo.Path));
+	if (!HidDevice)
+	{
+		ErrorMessage = WCHAR_TO_TCHAR(hid_error(nullptr));
+		return "";
+	}
+
+	TArray<wchar_t> ManufacturerBuffer;
+	ManufacturerBuffer.AddZeroed(256);
+
+	int32 Result = hid_get_manufacturer_string(reinterpret_cast<hid_device*>(HidDevice), ManufacturerBuffer.GetData(), 256);
+	if (Result < 0)
+	{
+		ErrorMessage = WCHAR_TO_TCHAR(hid_error(reinterpret_cast<hid_device*>(HidDevice)));
+		return "";
+	}
+
+	const FString ManufacturerString = WCHAR_TO_TCHAR(ManufacturerBuffer.GetData());
+
+	hid_close(HidDevice);
+
+	return ManufacturerString;
 }
 
 FString UUnHIDBlueprintFunctionLibrary::UnHIDGetProductString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage)
 {
-    if (UnHIDDeviceInfo.Path.IsEmpty())
-    {
-        ErrorMessage = "Empty UnHIDDeviceInfo Path";
-        return "";
-    }
+	if (UnHIDDeviceInfo.Path.IsEmpty())
+	{
+		ErrorMessage = "Empty UnHIDDeviceInfo Path";
+		return "";
+	}
 
-    hid_device* HidDevice = hid_open_path(TCHAR_TO_UTF8(*UnHIDDeviceInfo.Path));
-    if (!HidDevice)
-    {
-        ErrorMessage = WCHAR_TO_TCHAR(hid_error(nullptr));
-        return "";
-    }
-    
-    TArray<wchar_t> ProductBuffer;
-    ProductBuffer.AddZeroed(256);
-    
-    int32 Result = hid_get_product_string(reinterpret_cast<hid_device*>(HidDevice), ProductBuffer.GetData(), 256);
-    if (Result < 0)
-    {
-        ErrorMessage = WCHAR_TO_TCHAR(hid_error(reinterpret_cast<hid_device*>(HidDevice)));
-        return "";
-    }
-    
-    const FString ProductString = WCHAR_TO_TCHAR(ProductBuffer.GetData());
-    
-    hid_close(HidDevice);
-    
-    return ProductString;
+	hid_device* HidDevice = hid_open_path(TCHAR_TO_UTF8(*UnHIDDeviceInfo.Path));
+	if (!HidDevice)
+	{
+		ErrorMessage = WCHAR_TO_TCHAR(hid_error(nullptr));
+		return "";
+	}
+
+	TArray<wchar_t> ProductBuffer;
+	ProductBuffer.AddZeroed(256);
+
+	int32 Result = hid_get_product_string(reinterpret_cast<hid_device*>(HidDevice), ProductBuffer.GetData(), 256);
+	if (Result < 0)
+	{
+		ErrorMessage = WCHAR_TO_TCHAR(hid_error(reinterpret_cast<hid_device*>(HidDevice)));
+		return "";
+	}
+
+	const FString ProductString = WCHAR_TO_TCHAR(ProductBuffer.GetData());
+
+	hid_close(HidDevice);
+
+	return ProductString;
 }
 
 FString UUnHIDBlueprintFunctionLibrary::UnHIDBytesToHexString(const TArray<uint8>& Bytes)
@@ -803,4 +803,40 @@ float UUnHIDBlueprintFunctionLibrary::UnHIDParseAnalogFromBytes(const TArray<uin
 	}
 
 	return FMath::GetMappedRangeValueClamped(TRange<double>(Minimum, Maximum), TRange<double>(AnalogMin, AnalogMax), static_cast<double>(UnHIDParseUnsignedIntegerFromBytes(Bytes, BitOffset, BitSize)));
+}
+
+bool UUnHIDBlueprintFunctionLibrary::UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage, int64& BitOffset, int64& BitSize)
+{
+	const bool bHasReportIdPrefix = UnHIDDescriptorReports.Num() > 1 || (UnHIDDescriptorReports.Num() == 1 && UnHIDDescriptorReports[0].ReportId != 0);
+	for (const FUnHIDDeviceDescriptorReport& UnHIDDeviceDescriptorReport : UnHIDDescriptorReports)
+	{
+		for (const FUnHIDDeviceDescriptorReportItem& UnHIDDeviceDescriptorReportItem : UnHIDDeviceDescriptorReport.Items)
+		{
+			if (UnHIDDeviceDescriptorReportItem.UsagePage == UsagePage)
+			{
+				if (UnHIDDeviceDescriptorReportItem.Usage.Contains(Usage))
+				{
+					BitOffset = (bHasReportIdPrefix ? 8 : 0) + UnHIDDeviceDescriptorReportItem.BitOffset + (UnHIDDeviceDescriptorReportItem.BitSize * UnHIDDeviceDescriptorReportItem.Usage.IndexOfByKey(Usage));
+					BitSize = UnHIDDeviceDescriptorReportItem.BitSize;
+					return true;
+				}
+				else if (Usage >= UnHIDDeviceDescriptorReportItem.UsageMinimum && Usage <= UnHIDDeviceDescriptorReportItem.UsageMaximum)
+				{
+					BitOffset = (bHasReportIdPrefix ? 8 : 0) + UnHIDDeviceDescriptorReportItem.BitOffset + (UnHIDDeviceDescriptorReportItem.BitSize * UnHIDDeviceDescriptorReportItem.Usage.Num()) + (UnHIDDeviceDescriptorReportItem.BitSize * (Usage - UnHIDDeviceDescriptorReportItem.UsageMinimum));
+					BitSize = UnHIDDeviceDescriptorReportItem.BitSize;
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+FString UUnHIDBlueprintFunctionLibrary::UnHIDInt32ToHexString(const int32 Value)
+{
+	TArray<uint8> Bytes;
+	Bytes.Append(reinterpret_cast<const uint8*>(&Value), sizeof(int32));
+
+	return UnHIDBytesToHexString(Bytes);
 }

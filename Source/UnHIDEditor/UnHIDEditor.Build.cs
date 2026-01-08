@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright 2026 - Roberto De Ioris
 
 using System.IO;
 using UnrealBuildTool;
@@ -40,7 +40,9 @@ public class UnHIDEditor : ModuleRules
                 "Slate",
                 "SlateCore",
                 "InputCore",
-                "UnHID"
+                "UnHID",
+                "Projects",
+                "Json"
 				// ... add private dependencies that you statically link with here ...	
 			}
             );
