@@ -195,8 +195,14 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Reports from Report Descriptor Bytes"), Category = "UnHID")
 	static FUnHIDDeviceDescriptorReports UnHIDGetReportsFromReportDescriptorBytes(const TArray<uint8>& UnHIDReportDescriptorBytes, FString& ErrorMessage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Set Virtual InputDevice Axis"), Category = "UnHID")
-	static void UnHIDSetVitualInputDeviceAxis(const int32 ControllerId, const uint8 AxisId, const float Value);
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Virtual InputDevice Set Axis"), Category = "UnHID")
+	static void UnHIDVirtualInputDeviceSetAxis(const int32 ControllerId, const uint8 AxisId, const float Value);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Virtual InputDevice Button Press"), Category = "UnHID")
+	static void UnHIDVirtualInputDeviceButtonPress(const int32 ControllerId, const uint8 ButtonId);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Virtual InputDevice Button Release"), Category = "UnHID")
+	static void UnHIDVirtualInputDeviceButtonRelease(const int32 ControllerId, const uint8 ButtonId);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Bitmask from Bytes"), Category = "UnHID")
 	static TArray<bool> UnHIDParseBitmaskFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset, const int64 BitSize);

@@ -726,9 +726,19 @@ FUnHIDDeviceDescriptorReports UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFro
 	return DescriptorReports;
 }
 
-void UUnHIDBlueprintFunctionLibrary::UnHIDSetVitualInputDeviceAxis(const int32 ControllerId, const uint8 AxisId, const float Value)
+void UUnHIDBlueprintFunctionLibrary::UnHIDVirtualInputDeviceSetAxis(const int32 ControllerId, const uint8 AxisId, const float Value)
 {
-	FUnHIDModule::Get().SetVitualInputDeviceAxis(ControllerId, AxisId, Value);
+	FUnHIDModule::Get().VirtualInputDeviceSetAxis(ControllerId, AxisId, Value);
+}
+
+void UUnHIDBlueprintFunctionLibrary::UnHIDVirtualInputDeviceButtonPress(const int32 ControllerId, const uint8 ButtonId)
+{
+	FUnHIDModule::Get().VirtualInputDeviceButtonPress(ControllerId, ButtonId);
+}
+
+void UUnHIDBlueprintFunctionLibrary::UnHIDVirtualInputDeviceButtonRelease(const int32 ControllerId, const uint8 ButtonId)
+{
+	FUnHIDModule::Get().VirtualInputDeviceButtonRelease(ControllerId, ButtonId);
 }
 
 TArray<bool> UUnHIDBlueprintFunctionLibrary::UnHIDParseBitmaskFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset, const int64 BitSize)

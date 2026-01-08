@@ -3,7 +3,10 @@
 #include "UnHIDEditor.h"
 #include "Editor/WorkspaceMenuStructure/Public/WorkspaceMenuStructure.h"
 #include "Editor/WorkspaceMenuStructure/Public/WorkspaceMenuStructureModule.h"
+#include "Framework/Application/IInputProcessor.h"
 #include "Interfaces/IPluginManager.h"
+#include "LevelEditor.h"
+#include "SLevelViewport.h"
 #include "Serialization/JsonSerializer.h"
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
 #include "UnHIDBlueprintFunctionLibrary.h"
@@ -25,6 +28,14 @@ void FUnHIDEditorModule::StartupModule()
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("UnHIDHUT", FOnSpawnTab::CreateStatic(&FUnHIDEditorModule::CreateUnHIDHUT))
 		.SetDisplayName(LOCTEXT("UnHID HUT", "UnHID HUT"))
 		.SetTooltipText(LOCTEXT("Open the UnHID HUT", "Open the UnHID HUT"))
+		.SetIcon(FSlateIcon(
+			FAppStyle::GetAppStyleSetName()
+			, "Debug"))
+		.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsDebugCategory());
+
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("UnHIDVirtualInputConsole", FOnSpawnTab::CreateStatic(&FUnHIDEditorModule::CreateUnHIDVirtualInputConsole))
+		.SetDisplayName(LOCTEXT("UnHID Virtual Input Console", "UnHID Virtual Input Console"))
+		.SetTooltipText(LOCTEXT("Open the UnHID Virtual Input Console", "Open the UnHID Virtual Input Console"))
 		.SetIcon(FSlateIcon(
 			FAppStyle::GetAppStyleSetName()
 			, "Debug"))
@@ -996,6 +1007,250 @@ protected:
 	TSharedPtr<SVerticalBox> UsagePageUsages = nullptr;
 };
 
+class FUnHIDInputProcessor : public IInputProcessor
+{
+public:
+	bool HandleAnalogInputEvent(FSlateApplication& SlateApp, const FAnalogInputEvent& InAnalogInputEvent) override
+	{
+		if (InAnalogInputEvent.GetKey().GetFName().ToString().StartsWith("UnHID_Axis"))
+		{
+			FLevelEditorModule& LevelEditorModule = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
+			TWeakPtr<SViewport> ViewportWidget = LevelEditorModule.GetFirstActiveViewport()->GetViewportWidget();
+			if (ViewportWidget.IsValid())
+			{
+				ViewportWidget.Pin()->OnAnalogValueChanged(ViewportWidget.Pin()->GetCachedGeometry(), InAnalogInputEvent);
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	bool HandleKeyDownEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent) override
+	{
+		if (InKeyEvent.GetKey().GetFName().ToString().StartsWith("UnHID_Button"))
+		{
+			FLevelEditorModule& LevelEditorModule = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
+			TWeakPtr<SViewport> ViewportWidget = LevelEditorModule.GetFirstActiveViewport()->GetViewportWidget();
+			if (ViewportWidget.IsValid())
+			{
+				ViewportWidget.Pin()->OnKeyDown(ViewportWidget.Pin()->GetCachedGeometry(), InKeyEvent);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool HandleKeyUpEvent(FSlateApplication& SlateApp, const FKeyEvent& InKeyEvent)
+	{
+		if (InKeyEvent.GetKey().GetFName().ToString().StartsWith("UnHID_Button"))
+		{
+			FLevelEditorModule& LevelEditorModule = FModuleManager::GetModuleChecked<FLevelEditorModule>("LevelEditor");
+			TWeakPtr<SViewport> ViewportWidget = LevelEditorModule.GetFirstActiveViewport()->GetViewportWidget();
+			if (ViewportWidget.IsValid())
+			{
+				ViewportWidget.Pin()->OnKeyUp(ViewportWidget.Pin()->GetCachedGeometry(), InKeyEvent);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	void Tick(const float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICursor> Cursor) override
+	{
+
+	}
+};
+
+class SUnHIDVirtualInputConsole : public SCompoundWidget
+{
+	SLATE_BEGIN_ARGS(SUnHIDVirtualInputConsole)
+		{
+		}
+
+	SLATE_END_ARGS()
+
+	virtual ~SUnHIDVirtualInputConsole() override
+	{
+		if (InputPreProcessor.IsValid())
+		{
+			FSlateApplication::Get().UnregisterInputPreProcessor(InputPreProcessor);
+			InputPreProcessor = nullptr;
+		}
+	}
+
+	void Construct(const FArguments& InArgs)
+	{
+		if (InputPreProcessor.IsValid())
+		{
+			FSlateApplication::Get().UnregisterInputPreProcessor(InputPreProcessor);
+		}
+		
+		InputPreProcessor = MakeShared<FUnHIDInputProcessor>();
+
+		FSlateApplication::Get().RegisterInputPreProcessor(InputPreProcessor);
+
+		ChildSlot
+			[
+				SNew(SBorder).Padding(8)
+					[
+						SNew(SVerticalBox)
+							+ SVerticalBox::Slot().AutoHeight()
+							[
+								SNew(SBorder).Padding(8)
+									[
+										SNew(SVerticalBox)
+											+ SVerticalBox::Slot().AutoHeight()
+											[
+												SNew(STextBlock).Text(FText::FromString(TEXT("UnHID Virtual Input Axis")))
+											]
+											+ SVerticalBox::Slot().AutoHeight()
+											[
+												SNew(SSpacer)
+											]
+											+ SVerticalBox::Slot().AutoHeight()
+											[
+												SNew(SHorizontalBox)
+													+ SHorizontalBox::Slot().AutoWidth().VAlign(EVerticalAlignment::VAlign_Center).Padding(4)
+													[
+														SNew(STextBlock).Text(FText::FromString(TEXT("Axis Id:")))
+													]
+													+ SHorizontalBox::Slot().AutoWidth()
+													[
+														SAssignNew(AxisAxisIdInput, SEditableTextBox).MinDesiredWidth(20).Text(FText::FromString("0"))
+													]
+											]
+										+ SVerticalBox::Slot().AutoHeight()
+											[
+												SNew(SHorizontalBox)
+													+ SHorizontalBox::Slot().AutoWidth().VAlign(EVerticalAlignment::VAlign_Center).Padding(4)
+													[
+														SNew(STextBlock).Text(FText::FromString(TEXT("Controller Id:")))
+													]
+													+ SHorizontalBox::Slot().AutoWidth()
+													[
+														SAssignNew(AxisControllerIdInput, SEditableTextBox).MinDesiredWidth(20).Text(FText::FromString("0"))
+													]
+											]
+										+ SVerticalBox::Slot().AutoHeight()
+											[
+												SNew(SHorizontalBox)
+													+ SHorizontalBox::Slot().AutoWidth().VAlign(EVerticalAlignment::VAlign_Center).Padding(4)
+													[
+														SNew(STextBlock).Text(FText::FromString(TEXT("Value:")))
+													]
+													+ SHorizontalBox::Slot().AutoWidth()
+													[
+														SAssignNew(AxisValueInput, SEditableTextBox).MinDesiredWidth(20).Text(FText::FromString("0"))
+													]
+											]
+										+ SVerticalBox::Slot().AutoHeight()
+											[
+												SNew(SHorizontalBox)
+													+ SHorizontalBox::Slot().AutoWidth()
+													[
+														SNew(SButton).Text(FText::FromString("Set")).OnClicked(this, &SUnHIDVirtualInputConsole::OnAxisSet)
+													]
+											]
+									]
+							]
+						+ SVerticalBox::Slot().AutoHeight()
+							[
+								SNew(SBorder).Padding(8)
+									[
+										SNew(SVerticalBox)
+											+ SVerticalBox::Slot().AutoHeight()
+											[
+												SNew(STextBlock).Text(FText::FromString(TEXT("UnHID Virtual Input Button")))
+											]
+											+ SVerticalBox::Slot().AutoHeight()
+											[
+												SNew(SSpacer)
+											]
+											+ SVerticalBox::Slot().AutoHeight()
+											[
+												SNew(SHorizontalBox)
+													+ SHorizontalBox::Slot().AutoWidth().VAlign(EVerticalAlignment::VAlign_Center).Padding(4)
+													[
+														SNew(STextBlock).Text(FText::FromString(TEXT("Button Id:")))
+													]
+													+ SHorizontalBox::Slot().AutoWidth()
+													[
+														SAssignNew(ButtonButtonIdInput, SEditableTextBox).MinDesiredWidth(20).Text(FText::FromString("0"))
+													]
+											]
+										+ SVerticalBox::Slot().AutoHeight()
+											[
+												SNew(SHorizontalBox)
+													+ SHorizontalBox::Slot().AutoWidth().VAlign(EVerticalAlignment::VAlign_Center).Padding(4)
+													[
+														SNew(STextBlock).Text(FText::FromString(TEXT("Controller Id:")))
+													]
+													+ SHorizontalBox::Slot().AutoWidth()
+													[
+														SAssignNew(ButtonControllerIdInput, SEditableTextBox).MinDesiredWidth(20).Text(FText::FromString("0"))
+													]
+											]
+										+ SVerticalBox::Slot().AutoHeight()
+											[
+												SNew(SHorizontalBox)
+													+ SHorizontalBox::Slot().VAlign(EVerticalAlignment::VAlign_Center).AutoWidth()
+													[
+														SNew(SButton).Text(FText::FromString(TEXT("Press"))).OnClicked(this, &SUnHIDVirtualInputConsole::OnButtonPressed)
+													]
+													+ SHorizontalBox::Slot().AutoWidth()
+													[
+														SNew(SButton).Text(FText::FromString(TEXT("Release"))).OnClicked(this, &SUnHIDVirtualInputConsole::OnButtonReleased)
+													]
+											]
+									]
+							]
+					]
+			];
+	}
+
+	FReply OnAxisSet()
+	{
+		const int32 AxisId = FCString::Atoi(*AxisAxisIdInput->GetText().ToString());
+		const int32 ControllerId = FCString::Atoi(*AxisControllerIdInput->GetText().ToString());
+		const float Value = FCString::Atof(*AxisValueInput->GetText().ToString());
+
+		UUnHIDBlueprintFunctionLibrary::UnHIDVirtualInputDeviceSetAxis(ControllerId, AxisId, Value);
+
+		return FReply::Handled();
+	}
+
+	FReply OnButtonPressed()
+	{
+		const int32 ButtonId = FCString::Atoi(*ButtonButtonIdInput->GetText().ToString());
+		const int32 ControllerId = FCString::Atoi(*ButtonControllerIdInput->GetText().ToString());
+
+		UUnHIDBlueprintFunctionLibrary::UnHIDVirtualInputDeviceButtonPress(ControllerId, ButtonId);
+		return FReply::Handled();
+	}
+
+	FReply OnButtonReleased()
+	{
+		const int32 ButtonId = FCString::Atoi(*ButtonButtonIdInput->GetText().ToString());
+		const int32 ControllerId = FCString::Atoi(*ButtonControllerIdInput->GetText().ToString());
+
+		UUnHIDBlueprintFunctionLibrary::UnHIDVirtualInputDeviceButtonRelease(ControllerId, ButtonId);
+		return FReply::Handled();
+	}
+
+protected:
+
+	TSharedPtr<SEditableTextBox> AxisAxisIdInput;
+	TSharedPtr<SEditableTextBox> AxisControllerIdInput;
+	TSharedPtr<SEditableTextBox> AxisValueInput;
+	TSharedPtr<SEditableTextBox> ButtonButtonIdInput;
+	TSharedPtr<SEditableTextBox> ButtonControllerIdInput;
+
+	TSharedPtr<IInputProcessor> InputPreProcessor = nullptr;
+};
+
 TSharedRef<SDockTab> FUnHIDEditorModule::CreateUnHIDDashboard(const FSpawnTabArgs& Args)
 {
 	return SNew(SDockTab).TabRole(ETabRole::NomadTab)
@@ -1009,6 +1264,14 @@ TSharedRef<SDockTab> FUnHIDEditorModule::CreateUnHIDHUT(const FSpawnTabArgs& Arg
 	return SNew(SDockTab).TabRole(ETabRole::NomadTab)
 		[
 			SNew(SUnHIDHUT)
+		];
+}
+
+TSharedRef<SDockTab> FUnHIDEditorModule::CreateUnHIDVirtualInputConsole(const FSpawnTabArgs& Args)
+{
+	return SNew(SDockTab).TabRole(ETabRole::NomadTab)
+		[
+			SNew(SUnHIDVirtualInputConsole)
 		];
 }
 

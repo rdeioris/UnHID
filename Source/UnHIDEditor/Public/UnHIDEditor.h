@@ -15,4 +15,5 @@ public:
 private:
 	static TSharedRef<SDockTab> CreateUnHIDDashboard(const FSpawnTabArgs& Args);
 	static TSharedRef<SDockTab> CreateUnHIDHUT(const FSpawnTabArgs& Args);
+	static TSharedRef<SDockTab> CreateUnHIDVirtualInputConsole(const FSpawnTabArgs& Args);
 };

@@ -22,7 +22,9 @@ public:
 		return Singleton;
 	}
 
-	void SetVitualInputDeviceAxis(const int32 ControllerId, const uint8 AxisId, const float Value);
+	void VirtualInputDeviceSetAxis(const int32 ControllerId, const uint8 AxisId, const float Value);
+	void VirtualInputDeviceButtonPress(const int32 ControllerId, const uint8 ButtonId);
+	void VirtualInputDeviceButtonRelease(const int32 ControllerId, const uint8 ButtonId);
 
 protected:
 
