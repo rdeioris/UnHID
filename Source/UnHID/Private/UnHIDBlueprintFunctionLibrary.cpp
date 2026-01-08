@@ -10,26 +10,6 @@ THIRD_PARTY_INCLUDES_END
 #include "UnHID.h"
 #include "UnHIDDevice.h"
 
-EUnHIDBusType UnHID::ToUnHIDBusType(const int32 BusType)
-{
-	switch (BusType)
-	{
-	case HID_API_BUS_USB:
-		return EUnHIDBusType::USB;
-	case HID_API_BUS_BLUETOOTH:
-		return EUnHIDBusType::Bluetooth;
-	case HID_API_BUS_I2C:
-		return EUnHIDBusType::I2C;
-	case HID_API_BUS_SPI:
-		return EUnHIDBusType::SPI;
-	case HID_API_BUS_VIRTUAL:
-		return EUnHIDBusType::Virtual;
-	default:
-		break;
-	}
-
-	return EUnHIDBusType::Unknown;
-}
 
 TArray<FUnHIDDeviceInfo> UUnHIDBlueprintFunctionLibrary::UnHIDEnumerate()
 {
@@ -39,18 +19,9 @@ TArray<FUnHIDDeviceInfo> UUnHIDBlueprintFunctionLibrary::UnHIDEnumerate()
 	for (struct hid_device_info* CurrentDev = Devs; CurrentDev; CurrentDev = CurrentDev->next)
 	{
 		FUnHIDDeviceInfo DeviceInfo;
-		DeviceInfo.Path = UTF8_TO_TCHAR(CurrentDev->path);
-		DeviceInfo.VendorId = CurrentDev->vendor_id;
-		DeviceInfo.ProductId = CurrentDev->product_id;
-		DeviceInfo.SerialNumber = WCHAR_TO_TCHAR(CurrentDev->serial_number);
-		DeviceInfo.ReleaseNumber = CurrentDev->release_number;
-		DeviceInfo.Manufacturer = WCHAR_TO_TCHAR(CurrentDev->manufacturer_string);
-		DeviceInfo.Product = WCHAR_TO_TCHAR(CurrentDev->product_string);
-		DeviceInfo.UsagePage = CurrentDev->usage_page;
-		DeviceInfo.Usage = CurrentDev->usage;
-		DeviceInfo.InterfaceNumber = CurrentDev->interface_number;
-		DeviceInfo.BusType = UnHID::ToUnHIDBusType(CurrentDev->bus_type);
-
+		
+        UnHID::FillDeviceInfo(CurrentDev, DeviceInfo);
+        
 		DeviceInfos.Add(MoveTemp(DeviceInfo));
 	}
 

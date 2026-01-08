@@ -11,22 +11,6 @@
 DECLARE_DYNAMIC_DELEGATE_ThreeParams(FUnHIDReadDynamicDelegate, UUnHIDDevice*, UnHIDDevice, const TArray<uint8>&, Data, const FString&, ErrorMessage);
 
 UENUM()
-enum class EUnHIDBusType : uint8
-{
-	Unknown,
-	USB,
-	Bluetooth,
-	I2C,
-	SPI,
-	Virtual
-};
-
-namespace UnHID
-{
-	EUnHIDBusType ToUnHIDBusType(const int32 BusType);
-}
-
-UENUM()
 enum class EUnHIDReportDescriptorGlobalItems : uint8
 {
 	UsagePage = 0x0,
@@ -154,45 +138,6 @@ struct FUnHIDDeviceDescriptorReports
 	TArray<FUnHIDDeviceDescriptorReport> Features;
 };
 
-USTRUCT(BlueprintType)
-struct FUnHIDDeviceInfo
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	FString Path;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int32 VendorId = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int32 ProductId = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	FString SerialNumber;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int32 ReleaseNumber = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	FString Manufacturer;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	FString Product;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int32 UsagePage = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int32 Usage = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int32 InterfaceNumber = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	EUnHIDBusType BusType = EUnHIDBusType::Unknown;
-};
-
 /**
  *
  */
@@ -230,10 +175,10 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Device"), Category = "UnHID")
 	static UUnHIDDevice* UnHIDOpenDevice(const FUnHIDDeviceInfo& UnHIDDeviceInfo, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, FString& ErrorMessage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Device by Usage filter with HexStrings"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Device by Usage filter"), Category = "UnHID")
 	static UUnHIDDevice* UnHIDOpenDeviceByUsageFilter(const int32 UsagePage, const int32 Usage, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, FString& ErrorMessage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Multiple Devices by Usage filter with HexStrings"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Multiple Devices by Usage filter"), Category = "UnHID")
 	static TArray<UUnHIDDevice*> UnHIDOpenDevicesByUsageFilter(const int32 UsagePage, const int32 Usage, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, TArray<FString>& ErrorMessages);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Device by Usage filter with HexStrings"), Category = "UnHID")

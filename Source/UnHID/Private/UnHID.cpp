@@ -52,8 +52,18 @@ protected:
 	TMap<FName, TPair<int32, float>> AxisSnapshot;
 };
 
+#if PLATFORM_MAC
+extern "C"
+{
+    void hid_darwin_set_open_exclusive(int32 OpenExclusive);
+}
+#endif
+
 void FUnHIDModule::StartupModule()
 {
+#if PLATFORM_MAC
+    hid_darwin_set_open_exclusive(0);
+#endif
 	IInputDeviceModule::StartupModule();
 
 	const FName NAME_UnHID(TEXT("UnHID"));
