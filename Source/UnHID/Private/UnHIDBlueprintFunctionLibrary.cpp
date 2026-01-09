@@ -843,6 +843,34 @@ bool UUnHIDBlueprintFunctionLibrary::UnHIDGetBitOffsetAndSizeFromDescriptorRepor
 	return false;
 }
 
+bool UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage, FUnHIDDeviceDescriptorReportItem& DescriptorReportItem)
+{
+	const bool bHasReportIdPrefix = UnHIDDescriptorReports.Num() > 1 || (UnHIDDescriptorReports.Num() == 1 && UnHIDDescriptorReports[0].ReportId != 0);
+	for (const FUnHIDDeviceDescriptorReport& UnHIDDeviceDescriptorReport : UnHIDDescriptorReports)
+	{
+		for (const FUnHIDDeviceDescriptorReportItem& UnHIDDeviceDescriptorReportItem : UnHIDDeviceDescriptorReport.Items)
+		{
+			if (UnHIDDeviceDescriptorReportItem.UsagePage == UsagePage)
+			{
+				if (UnHIDDeviceDescriptorReportItem.Usage.Contains(Usage))
+				{
+					DescriptorReportItem = UnHIDDeviceDescriptorReportItem;
+					DescriptorReportItem.BitOffset = (bHasReportIdPrefix ? 8 : 0) + UnHIDDeviceDescriptorReportItem.BitOffset + (UnHIDDeviceDescriptorReportItem.BitSize * UnHIDDeviceDescriptorReportItem.Usage.IndexOfByKey(Usage));
+					return true;
+				}
+				else if (Usage >= UnHIDDeviceDescriptorReportItem.UsageMinimum && Usage <= UnHIDDeviceDescriptorReportItem.UsageMaximum)
+				{
+					DescriptorReportItem = UnHIDDeviceDescriptorReportItem;
+					DescriptorReportItem.BitOffset = (bHasReportIdPrefix ? 8 : 0) + UnHIDDeviceDescriptorReportItem.BitOffset + (UnHIDDeviceDescriptorReportItem.BitSize * UnHIDDeviceDescriptorReportItem.Usage.Num()) + (UnHIDDeviceDescriptorReportItem.BitSize * (Usage - UnHIDDeviceDescriptorReportItem.UsageMinimum));
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 FString UUnHIDBlueprintFunctionLibrary::UnHIDInt32ToHexString(const int32 Value)
 {
 	TArray<uint8> Bytes;

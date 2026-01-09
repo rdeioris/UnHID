@@ -352,7 +352,7 @@ FUnHIDDeviceInfo UUnHIDDevice::GetDeviceInfo() const
 	return FUnHIDDeviceInfo();
 }
 
-bool UUnHIDDevice::GetBitOffsetAndSizeFromDescriptorReportsAndUsage(const int32 UsagePage, const int32 Usage, int64& BitOffset, int64& BitSize, FString& ErrorMessage)
+bool UUnHIDDevice::GetDescriptorReports(struct FUnHIDDeviceDescriptorReports& DeviceDescriptorReports, FString& ErrorMessage)
 {
 	if (!ReportDescriptor.IsValid())
 	{
@@ -360,7 +360,63 @@ bool UUnHIDDevice::GetBitOffsetAndSizeFromDescriptorReportsAndUsage(const int32 
 		return false;
 	}
 
-	const FUnHIDDeviceDescriptorReports DescriptorReports = UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFromReportDescriptorBytes(*ReportDescriptor, ErrorMessage);
+	if (!DescriptorReports.IsValid())
+	{
+		const FUnHIDDeviceDescriptorReports NewDescriptorReports = UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFromReportDescriptorBytes(*ReportDescriptor, ErrorMessage);
+		if (NewDescriptorReports.bValid)
+		{
+			DescriptorReports = MakeShared<FUnHIDDeviceDescriptorReports>(NewDescriptorReports);
+		}
+		else
+		{
+			return false;
+		}
+	}
 
-	return UUnHIDBlueprintFunctionLibrary::UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndUsage(DescriptorReports.Inputs, UsagePage, Usage, BitOffset, BitSize);
+	DeviceDescriptorReports = *DescriptorReports;
+
+	return true;
+}
+
+bool UUnHIDDevice::GetBitOffsetAndSizeFromDescriptorReportsAndUsage(const int32 UsagePage, const int32 Usage, int64& BitOffset, int64& BitSize, FString& ErrorMessage)
+{
+	FUnHIDDeviceDescriptorReports DeviceDescriptorReports;
+	if (!GetDescriptorReports(DeviceDescriptorReports, ErrorMessage))
+	{
+		return false;
+	}
+
+	return UUnHIDBlueprintFunctionLibrary::UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndUsage(DeviceDescriptorReports.Inputs, UsagePage, Usage, BitOffset, BitSize);
+}
+
+bool UUnHIDDevice::ParseAnalogFromBytesAndUsageChecked(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, const float AnalogMin, const float AnalogMax, float& Value, FString& ErrorMessage)
+{
+	FUnHIDDeviceDescriptorReports DeviceDescriptorReports;
+	if (!GetDescriptorReports(DeviceDescriptorReports, ErrorMessage))
+	{
+		return false;
+	}
+
+	FUnHIDDeviceDescriptorReportItem DescriptorReportItem;
+
+	if (!UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(DeviceDescriptorReports.Inputs, UsagePage, Usage, DescriptorReportItem))
+	{
+		ErrorMessage = "Usage not found in Report Descriptor";
+		return false;
+	}
+
+	Value = UUnHIDBlueprintFunctionLibrary::UnHIDParseAnalogFromBytes(Bytes, DescriptorReportItem.BitOffset, DescriptorReportItem.BitSize, DescriptorReportItem.LogicalMinimum, DescriptorReportItem.LogicalMaximum, AnalogMin, AnalogMax);
+	return true;
+}
+
+float UUnHIDDevice::ParseAnalogFromBytesAndUsage(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, const float AnalogMin, const float AnalogMax)
+{
+	float Value = 0;
+	FString ErrorMessage;
+	if (ParseAnalogFromBytesAndUsageChecked(Bytes, UsagePage, Usage, AnalogMin, AnalogMax, Value, ErrorMessage))
+	{
+		return Value;
+	}
+
+	return 0;
 }

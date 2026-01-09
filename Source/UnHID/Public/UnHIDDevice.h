@@ -65,6 +65,87 @@ namespace UnHID
     void FillDeviceInfo(const hid_device_info*, FUnHIDDeviceInfo& UnHIDDeviceInfo);
 }
 
+USTRUCT(BlueprintType)
+struct FUnHIDDeviceDescriptorReportItem
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int64 BitOffset = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int64 BitSize = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int64 Count = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int64 UsagePage = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    TArray<int64> Usage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int64 UsageMinimum = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int64 UsageMaximum = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int64 LogicalMinimum = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int64 LogicalMaximum = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int64 PhysicalMinimum = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int64 PhysicalMaximum = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int64 UnitExponent = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int64 Unit = 0;
+};
+
+USTRUCT(BlueprintType)
+struct FUnHIDDeviceDescriptorReport
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int32 ReportId = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int32 NumBits = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    int32 NumBytes = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    TArray<FUnHIDDeviceDescriptorReportItem> Items;
+};
+
+USTRUCT(BlueprintType)
+struct FUnHIDDeviceDescriptorReports
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    bool bValid = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    TArray<FUnHIDDeviceDescriptorReport> Inputs;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    TArray<FUnHIDDeviceDescriptorReport> Outputs;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    TArray<FUnHIDDeviceDescriptorReport> Features;
+};
+
 /**
  * 
  */
@@ -102,6 +183,9 @@ public:
     
     UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "UnHIDDevice Get Report Descriptor"), Category = "UnHID")
     TArray<uint8> GetReportDescriptor() const;
+
+    UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Get Descriptor Reports"), Category = "UnHID")
+    bool GetDescriptorReports(FUnHIDDeviceDescriptorReports& DeviceDescriptorReports, FString& ErrorMessage);
     
     UFUNCTION(BlueprintCallable, BlueprintPure, meta = (DisplayName = "UnHIDDevice Get Device Info"), Category = "UnHID")
     FUnHIDDeviceInfo GetDeviceInfo() const;
@@ -109,11 +193,19 @@ public:
     UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Get BitOffset and BitSize from DescriptorReports and Usage"), Category = "UnHID")
     bool GetBitOffsetAndSizeFromDescriptorReportsAndUsage(const int32 UsagePage, const int32 Usage, int64& BitOffset, int64& BitSize, FString& ErrorMessage);
 
+
+    UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Analog from Bytes and Usage Checked"), Category = "UnHID")
+    bool ParseAnalogFromBytesAndUsageChecked(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, const float AnalogMin, const float AnalogMax, float& Value, FString& ErrorMessage);
+
+    UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Analog from Bytes and Usage"), Category = "UnHID")
+    float ParseAnalogFromBytesAndUsage(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, const float AnalogMin = -1, const float AnalogMax = 1);
+
 protected:
 	void* HidDevice = nullptr;
 
 	class FUnHIDDeviceWorkerThread* UnHIDDeviceWorkerThread = nullptr;
     
     TSharedPtr<TArray<uint8>> ReportDescriptor;
-    TSharedPtr<struct FUnHIDDeviceInfo> DeviceInfo;
+    TSharedPtr<FUnHIDDeviceInfo> DeviceInfo;
+    TSharedPtr<FUnHIDDeviceDescriptorReports> DescriptorReports;
 };

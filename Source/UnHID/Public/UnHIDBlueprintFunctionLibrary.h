@@ -58,86 +58,6 @@ enum class EUnHIDReportDescriptorMainItems : uint8
 	ReservedMax = 0xF
 };
 
-USTRUCT(BlueprintType)
-struct FUnHIDDeviceDescriptorReportItem
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int64 BitOffset = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int64 BitSize = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int64 Count = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int64 UsagePage = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	TArray<int64> Usage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int64 UsageMinimum = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int64 UsageMaximum = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int64 LogicalMinimum = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int64 LogicalMaximum = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int64 PhysicalMinimum = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int64 PhysicalMaximum = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int64 UnitExponent = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int64 Unit = 0;
-};
-
-USTRUCT(BlueprintType)
-struct FUnHIDDeviceDescriptorReport
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int32 ReportId = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int32 NumBits = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	int32 NumBytes = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	TArray<FUnHIDDeviceDescriptorReportItem> Items;
-};
-
-USTRUCT(BlueprintType)
-struct FUnHIDDeviceDescriptorReports
-{
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	bool bValid = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	TArray<FUnHIDDeviceDescriptorReport> Inputs;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	TArray<FUnHIDDeviceDescriptorReport> Outputs;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
-	TArray<FUnHIDDeviceDescriptorReport> Features;
-};
-
 /**
  *
  */
@@ -227,4 +147,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get BitOffset and BitSize from DescriptorReports and Usage"), Category = "UnHID")
 	static bool UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage, int64& BitOffset, int64& BitSize);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Descriptor Report Item from DescriptorReports and Usage"), Category = "UnHID")
+	static bool UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage, FUnHIDDeviceDescriptorReportItem& DescriptorReportItem);
 };

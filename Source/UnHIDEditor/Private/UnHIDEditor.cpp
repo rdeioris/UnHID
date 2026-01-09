@@ -151,7 +151,7 @@ class SUnHIDDashboard : public SCompoundWidget
 											.DefaultLabel(FText::FromString("Manufacturer"))
 											.SortMode_Lambda([this] {return HIDDeviceInfosManufacturerSortMode; })
 											.OnSort(this, &SUnHIDDashboard::SortHIDDeviceInfos)
-											.FillWidth(0.3)
+											.FillWidth(0.3).ShouldGenerateEmptyWidgetForSpacing(true)
 											+ SHeaderRow::Column("Product")
 											.DefaultLabel(FText::FromString("Product"))
 											.SortMode_Lambda([this] {return HIDDeviceInfosProductSortMode; })
@@ -1151,11 +1151,24 @@ class SUnHIDVirtualInputConsole : public SCompoundWidget
 											]
 									]
 							]
-						+ SVerticalBox::Slot().AutoHeight()
+						+ SVerticalBox::Slot()
 							[
 								SNew(SBorder).Padding(8)
 									[
-										SAssignNew(SnapshotsLog, SMultiLineEditableTextBox)
+										SNew(SVerticalBox)
+
+											+ SVerticalBox::Slot().AutoHeight()
+											[
+												SNew(SHorizontalBox)
+													+ SHorizontalBox::Slot().VAlign(EVerticalAlignment::VAlign_Center).AutoWidth()
+													[
+														SNew(SButton).Text(FText::FromString("Clear Log")).OnClicked(this, &SUnHIDVirtualInputConsole::ClearSnapshotsLog)
+													]
+											]
+										+ SVerticalBox::Slot().MinHeight(384).MaxHeight(384)
+											[
+												SAssignNew(SnapshotsLog, SMultiLineEditableTextBox).IsReadOnly(true)
+											]
 									]
 							]
 					]
@@ -1191,6 +1204,38 @@ class SUnHIDVirtualInputConsole : public SCompoundWidget
 		return FReply::Handled();
 	}
 
+	FReply ClearSnapshotsLog()
+	{
+		AxisSnapshotKeys.Empty();
+		AxisSnapshotMap.Empty();
+		ButtonSnapshotKeys.Empty();
+		ButtonSnapshotMap.Empty();
+
+		UpdateSnapshotsLog();
+
+		return FReply::Handled();
+	}
+
+	void UpdateSnapshotsLog()
+	{
+		if (SnapshotsLog.IsValid())
+		{
+			FString Log;
+
+			for (const FName AxisKeyName : AxisSnapshotKeys)
+			{
+				Log += FString::Printf(TEXT("%s: %f\n"), *AxisKeyName.ToString(), AxisSnapshotMap[AxisKeyName]);
+			}
+
+			for (const FName ButtonKeyName : ButtonSnapshotKeys)
+			{
+				Log += FString::Printf(TEXT("%s: %s\n"), *ButtonKeyName.ToString(), ButtonSnapshotMap[ButtonKeyName] ? TEXT("Pressed") : TEXT("Released"));
+			}
+
+			SnapshotsLog->SetText(FText::FromString(Log.LeftChop(1)));
+		}
+	}
+
 	void UpdateAxisSnapshotMap(const FName KeyName, const float Value)
 	{
 		if (AxisSnapshotMap.Contains(KeyName))
@@ -1203,17 +1248,22 @@ class SUnHIDVirtualInputConsole : public SCompoundWidget
 			AxisSnapshotMap.Add(KeyName, Value);
 		}
 
-		if (SnapshotsLog.IsValid())
+		UpdateSnapshotsLog();
+	}
+
+	void UpdateButtonSnapshotMap(const FName KeyName, bool bPressed)
+	{
+		if (ButtonSnapshotMap.Contains(KeyName))
 		{
-			FString Log;
-
-			for (const FName AxisKeyName : AxisSnapshotKeys)
-			{
-				Log += FString::Printf(TEXT("%s: %f\n"), *AxisKeyName.ToString(), AxisSnapshotMap[AxisKeyName]);
-			}
-
-			SnapshotsLog->SetText(FText::FromString(Log.LeftChop(1)));
+			ButtonSnapshotMap[KeyName] = bPressed;
 		}
+		else
+		{
+			ButtonSnapshotKeys.Add(KeyName);
+			ButtonSnapshotMap.Add(KeyName, bPressed);
+		}
+
+		UpdateSnapshotsLog();
 	}
 
 protected:
@@ -1228,6 +1278,9 @@ protected:
 
 	TArray<FName> AxisSnapshotKeys;
 	TMap<FName, float> AxisSnapshotMap;
+
+	TArray<FName> ButtonSnapshotKeys;
+	TMap<FName, bool> ButtonSnapshotMap;
 
 	TSharedPtr<SMultiLineEditableTextBox> SnapshotsLog;
 };
@@ -1266,6 +1319,10 @@ bool FUnHIDInputProcessor::HandleKeyDownEvent(FSlateApplication& SlateApp, const
 		if (ViewportWidget.IsValid())
 		{
 			ViewportWidget.Pin()->OnKeyDown(ViewportWidget.Pin()->GetCachedGeometry(), InKeyEvent);
+			if (UnHIDVirtualInputConsole.IsValid())
+			{
+				UnHIDVirtualInputConsole.Pin()->UpdateButtonSnapshotMap(InKeyEvent.GetKey().GetFName(), true);
+			}
 			return true;
 		}
 	}
@@ -1282,6 +1339,10 @@ bool FUnHIDInputProcessor::HandleKeyUpEvent(FSlateApplication& SlateApp, const F
 		if (ViewportWidget.IsValid())
 		{
 			ViewportWidget.Pin()->OnKeyUp(ViewportWidget.Pin()->GetCachedGeometry(), InKeyEvent);
+			if (UnHIDVirtualInputConsole.IsValid())
+			{
+				UnHIDVirtualInputConsole.Pin()->UpdateButtonSnapshotMap(InKeyEvent.GetKey().GetFName(), false);
+			}
 			return true;
 		}
 	}
