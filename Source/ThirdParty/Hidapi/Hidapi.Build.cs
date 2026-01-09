@@ -21,5 +21,13 @@ public class Hidapi : ModuleRules
                 }
             );
         }
+        else if (Target.Platform == UnrealTargetPlatform.Linux)
+        {
+            PublicDefinitions.Add("HID_API_EXPORT=__attribute__((visibility(\"default\")))");
+            PublicSystemIncludePaths.Add("/usr/include");
+            PublicSystemIncludePaths.Add("/usr/include/x86_64-linux-gnu");
+            PublicSystemLibraryPaths.Add("/usr/lib/x86_64-linux-gnu");
+            PublicAdditionalLibraries.Add("udev");
+        }
     }
 }
