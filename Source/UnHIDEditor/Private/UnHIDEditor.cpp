@@ -428,8 +428,15 @@ class SUnHIDDashboard : public SCompoundWidget
 				{
 					Usages += FString::Printf(TEXT("0x%02X, "), Usage);
 				}
-				DescriptorReportItems += FString::Printf(TEXT("\t\t\t\tBitOffset: %lld, BitSize: %lld, Count: %lld, UsagePage: 0x%02X, Usage: [%s], UsageMinimum: 0x%02X, UsageMaximum: 0x%02X, LogicalMinimum: %lld, LogicalMaximum: %lld\n"),
-					DescriptorReportItem.BitOffset, DescriptorReportItem.BitSize, DescriptorReportItem.Count, DescriptorReportItem.UsagePage, *Usages.LeftChop(2),
+
+				FString CollectionUsages;
+				for (const int64 Usage : DescriptorReportItem.CollectionUsage)
+				{
+					CollectionUsages += FString::Printf(TEXT("0x%02X, "), Usage);
+				}
+				DescriptorReportItems += FString::Printf(TEXT("\t\t\t\tBitOffset: %lld, BitSize: %lld, Count: %lld, UsagePage: 0x%02X, Collection Usage: [%s], Usage: [%s], UsageMinimum: 0x%02X, UsageMaximum: 0x%02X, LogicalMinimum: %lld, LogicalMaximum: %lld\n"),
+					DescriptorReportItem.BitOffset, DescriptorReportItem.BitSize, DescriptorReportItem.Count, 
+					DescriptorReportItem.UsagePage, *CollectionUsages.LeftChop(2), *Usages.LeftChop(2),
 					DescriptorReportItem.UsageMinimum, DescriptorReportItem.UsageMaximum,
 					DescriptorReportItem.LogicalMinimum, DescriptorReportItem.LogicalMaximum);
 			}

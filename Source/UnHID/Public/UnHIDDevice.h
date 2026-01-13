@@ -108,6 +108,9 @@ struct FUnHIDDeviceDescriptorReportItem
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
     int64 Unit = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+    TArray<int64> CollectionUsage;
 };
 
 USTRUCT(BlueprintType)

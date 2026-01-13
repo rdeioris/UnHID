@@ -58,6 +58,21 @@ enum class EUnHIDReportDescriptorMainItems : uint8
 	ReservedMax = 0xF
 };
 
+USTRUCT(BlueprintType)
+struct FUnHIDReportItem
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+	int32 BitOffset = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+	int32 BitSize = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+	int64 Value = 0;
+};
+
 /**
  *
  */
@@ -135,19 +150,22 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Analog from Bytes"), Category = "UnHID")
 	static float UnHIDParseAnalogFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset, const int64 BitSize, const int64 Minimum, const int64 Maximum, const float AnalogMin = -1, const float AnalogMax = 1);
-    
-    UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Serial Number String"), Category = "UnHID")
-    static FString UnHIDGetSerialNumberString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage);
-    
-    UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Manufacturer String"), Category = "UnHID")
-    static FString UnHIDGetManufacturerString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage);
-    
-    UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Product String"), Category = "UnHID")
-    static FString UnHIDGetProductString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Serial Number String"), Category = "UnHID")
+	static FString UnHIDGetSerialNumberString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Manufacturer String"), Category = "UnHID")
+	static FString UnHIDGetManufacturerString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Product String"), Category = "UnHID")
+	static FString UnHIDGetProductString(const FUnHIDDeviceInfo& UnHIDDeviceInfo, FString& ErrorMessage);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get BitOffset and BitSize from DescriptorReports and Usage"), Category = "UnHID")
 	static bool UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage, int64& BitOffset, int64& BitSize);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Descriptor Report Item from DescriptorReports and Usage"), Category = "UnHID")
 	static bool UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage, FUnHIDDeviceDescriptorReportItem& DescriptorReportItem);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Assemble Report"), Category = "UnHID")
+	static TArray<uint8> UnHIDAssembleReport(const int32 Size, const uint8 ReportID, const TArray<FUnHIDReportItem>& ReportItems);
 };

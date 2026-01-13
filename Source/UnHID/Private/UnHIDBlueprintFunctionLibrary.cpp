@@ -462,7 +462,6 @@ FUnHIDDeviceDescriptorReports UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFro
 
 	struct FReportDescriptorLocalState
 	{
-		TArray<int64> Usage;
 		int64 UsageMinimum = 0;
 		int64 UsageMaximum = 0;
 		int64 DesignatorIndex = 0;
@@ -472,10 +471,17 @@ FUnHIDDeviceDescriptorReports UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFro
 		int64 StringMinimum = 0;
 		int64 StringMaximum = 0;
 		int64 Delimiter = 0;
+		TArray<int64> Usage;
+	};
+
+	struct FReportDescriptorCollection
+	{
+		TArray<int64> Usage;
 	};
 
 	TArray<FReportDescriptorGlobalState> GlobalStack;
 	FReportDescriptorLocalState LocalState;
+	TArray<FReportDescriptorCollection> CollectionStack;
 
 	GlobalStack.AddDefaulted();
 
@@ -520,7 +526,7 @@ FUnHIDDeviceDescriptorReports UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFro
 			return DescriptorReports.Features.AddDefaulted_GetRef();
 		};
 
-	auto FillDescriptorReport = [](FUnHIDDeviceDescriptorReport& DescriptorReport, const FReportDescriptorGlobalState& GlobalState, const FReportDescriptorLocalState& LocalState) {
+	auto FillDescriptorReport = [&CollectionStack](FUnHIDDeviceDescriptorReport& DescriptorReport, const FReportDescriptorGlobalState& GlobalState, const FReportDescriptorLocalState& LocalState) {
 		DescriptorReport.ReportId = GlobalState.ReportID;
 
 		FUnHIDDeviceDescriptorReportItem DescriptorReportItem;
@@ -537,6 +543,11 @@ FUnHIDDeviceDescriptorReports UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFro
 		DescriptorReportItem.PhysicalMaximum = GlobalState.PhysicalMaximum;
 		DescriptorReportItem.UnitExponent = GlobalState.UnitExponent;
 		DescriptorReportItem.Unit = GlobalState.Unit;
+
+		if (CollectionStack.Num() > 0)
+		{
+			DescriptorReportItem.CollectionUsage = CollectionStack.Last().Usage;
+		}
 
 		DescriptorReport.Items.Add(MoveTemp(DescriptorReportItem));
 
@@ -623,6 +634,20 @@ FUnHIDDeviceDescriptorReports UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFro
 				FillDescriptorReport(DescriptorReportFeature, GlobalState, LocalState);
 			}
 			break;
+			case EUnHIDReportDescriptorMainItems::Collection:
+			{
+				FReportDescriptorCollection& NewCollection = CollectionStack.AddDefaulted_GetRef();
+				NewCollection.Usage = LocalState.Usage;
+			}
+			break;
+			case EUnHIDReportDescriptorMainItems::EndCollection:
+				if (CollectionStack.Num() < 1)
+				{
+					ErrorMessage = "CollectionStack is Empty";
+					return DescriptorReports;
+				}
+				CollectionStack.Pop();
+				break;
 			default:
 				break;
 			}
@@ -877,4 +902,45 @@ FString UUnHIDBlueprintFunctionLibrary::UnHIDInt32ToHexString(const int32 Value)
 	Bytes.Append(reinterpret_cast<const uint8*>(&Value), sizeof(int32));
 
 	return UnHIDBytesToHexString(Bytes);
+}
+
+TArray<uint8> UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(const int32 Size, const uint8 ReportID, const TArray<FUnHIDReportItem>& ReportItems)
+{
+	TArray<uint8> Report;
+
+	if (Size < 1)
+	{
+		return Report;
+	}
+
+	if (ReportID > 0)
+	{
+		Report.Add(ReportID);
+	}
+
+	Report.AddZeroed(Size);
+
+	for (const FUnHIDReportItem& ReportItem : ReportItems)
+	{
+		const uint64 RawValue = static_cast<uint64>(ReportItem.Value);
+
+		for (int32 BitIndex = 0; BitIndex < ReportItem.BitSize; BitIndex++)
+		{
+			const int32 CurrentBitOffset = ReportItem.BitOffset + BitIndex;
+			const int32 ByteIndex = CurrentBitOffset / 8;
+			const int32 ByteBit = CurrentBitOffset % 8;
+
+			if (Report.IsValidIndex(ByteIndex))
+			{
+				Report[ByteIndex] &= ~(1 << ByteBit);
+
+				if (RawValue & (1LL << BitIndex))
+				{
+					Report[ByteIndex] |= (1 << ByteBit);
+				}
+			}
+		}
+	}
+
+	return Report;
 }

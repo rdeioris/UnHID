@@ -111,4 +111,20 @@ bool FUnHIDUnitTests_ParseUnsignedInteger::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FUnHIDUnitTests_AssembleReport, "UnHID.UnitTests.AssembleReport", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FUnHIDUnitTests_AssembleReport::RunTest(const FString& Parameters)
+{
+	TArray<uint8> Data = UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(0, 0, {});
+	TestEqual("UnHIDAssembleReport(0, 0, {}) == {}", UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(0, 0, {}), {});
+
+	TArray<uint8> Data = UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(0, 0, {});
+	TestEqual("UnHIDAssembleReport(2, 0, {}) == { 0, 0 }", UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(2, 0, {}), { 0, 0 });
+
+	TArray<uint8> Data = UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(0, 0, {});
+	TestEqual("UnHIDAssembleReport(2, 17, {}) == { 17, 0, 0 }", UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(2, 17, {}), { 17, 0, 0 });
+
+	return true;
+}
+
 #endif
