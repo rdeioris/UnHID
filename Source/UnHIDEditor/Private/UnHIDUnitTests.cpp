@@ -115,14 +115,24 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FUnHIDUnitTests_AssembleReport, "UnHID.UnitTest
 
 bool FUnHIDUnitTests_AssembleReport::RunTest(const FString& Parameters)
 {
-	TArray<uint8> Data = UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(0, 0, {});
 	TestEqual("UnHIDAssembleReport(0, 0, {}) == {}", UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(0, 0, {}), {});
 
-	TArray<uint8> Data = UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(0, 0, {});
 	TestEqual("UnHIDAssembleReport(2, 0, {}) == { 0, 0 }", UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(2, 0, {}), { 0, 0 });
 
-	TArray<uint8> Data = UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(0, 0, {});
 	TestEqual("UnHIDAssembleReport(2, 17, {}) == { 17, 0, 0 }", UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(2, 17, {}), { 17, 0, 0 });
+
+	TestEqual("UnHIDAssembleReport(2, 17, { { 0, 8, 1} }) == { 17, 1, 0 }", UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(2, 17, { {0, 8, 1} }), { 17, 1, 0 });
+
+	TestEqual("UnHIDAssembleReport(2, 17, { { 0, 8, 1 }, { 8, 8, 17 } }) == { 17, 1, 17 }", UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(2, 17, { { 0, 8, 1 }, { 8, 8, 17 } }), { 17, 1, 17 });
+
+	const TArray<uint8> Data = UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(2, 0, { { 0, 4, 1 }, { 4, 4, 2 }, { 8, 4, 3 }, { 12, 4, 4 } });
+
+	TestEqual("UnHIDAssembleReport(2, 0, { { 0, 4, 1 }, { 4, 4, 2 }, { 8, 4, 3 }, { 12, 4, 4 } }) == { 0x21, 0x43 }", Data, { 0x21, 0x43 });
+
+	TestEqual("UnHIDParseUnsignedIntegerFromBytes({0x21, 0x43}, 0, 4) == 0x01", UUnHIDBlueprintFunctionLibrary::UnHIDParseUnsignedIntegerFromBytes(Data, 0, 4), 0x01);
+	TestEqual("UnHIDParseUnsignedIntegerFromBytes({0x21, 0x43}, 4, 4) == 0x02", UUnHIDBlueprintFunctionLibrary::UnHIDParseUnsignedIntegerFromBytes(Data, 4, 4), 0x02);
+	TestEqual("UnHIDParseUnsignedIntegerFromBytes({0x21, 0x43}, 8, 4) == 0x03", UUnHIDBlueprintFunctionLibrary::UnHIDParseUnsignedIntegerFromBytes(Data, 8, 4), 0x03);
+	TestEqual("UnHIDParseUnsignedIntegerFromBytes({0x21, 0x43}, 12, 4) == 0x04", UUnHIDBlueprintFunctionLibrary::UnHIDParseUnsignedIntegerFromBytes(Data, 12, 4), 0x04);
 
 	return true;
 }

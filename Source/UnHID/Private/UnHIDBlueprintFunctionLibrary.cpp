@@ -907,6 +907,7 @@ FString UUnHIDBlueprintFunctionLibrary::UnHIDInt32ToHexString(const int32 Value)
 TArray<uint8> UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(const int32 Size, const uint8 ReportID, const TArray<FUnHIDReportItem>& ReportItems)
 {
 	TArray<uint8> Report;
+	int32 AdditionalOffset = 0;
 
 	if (Size < 1)
 	{
@@ -916,18 +917,24 @@ TArray<uint8> UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(const int32 Si
 	if (ReportID > 0)
 	{
 		Report.Add(ReportID);
+		AdditionalOffset++;
 	}
 
 	Report.AddZeroed(Size);
 
 	for (const FUnHIDReportItem& ReportItem : ReportItems)
 	{
+		if (ReportItem.BitOffset < 0 || ReportItem.BitSize <= 0 || ReportItem.BitSize > 64)
+		{
+			continue;
+		}
+
 		const uint64 RawValue = static_cast<uint64>(ReportItem.Value);
 
 		for (int32 BitIndex = 0; BitIndex < ReportItem.BitSize; BitIndex++)
 		{
 			const int32 CurrentBitOffset = ReportItem.BitOffset + BitIndex;
-			const int32 ByteIndex = CurrentBitOffset / 8;
+			const int32 ByteIndex = (CurrentBitOffset / 8) + AdditionalOffset;
 			const int32 ByteBit = CurrentBitOffset % 8;
 
 			if (Report.IsValidIndex(ByteIndex))
