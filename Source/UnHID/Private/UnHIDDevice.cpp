@@ -401,8 +401,11 @@ bool UUnHIDDevice::ParseAnalogFromBytesAndUsageChecked(const TArray<uint8>& Byte
 
 	if (!UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(DeviceDescriptorReports.Inputs, UsagePage, Usage, DescriptorReportItem))
 	{
-		ErrorMessage = "Usage not found in Report Descriptor";
-		return false;
+		if (!UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(DeviceDescriptorReports.Features, UsagePage, Usage, DescriptorReportItem))
+		{
+			ErrorMessage = "Usage not found in Report Descriptor";
+			return false;
+		}
 	}
 
 	Value = UUnHIDBlueprintFunctionLibrary::UnHIDParseAnalogFromBytes(Bytes, DescriptorReportItem.BitOffset, DescriptorReportItem.BitSize, DescriptorReportItem.LogicalMinimum, DescriptorReportItem.LogicalMaximum, AnalogMin, AnalogMax);
@@ -414,6 +417,78 @@ float UUnHIDDevice::ParseAnalogFromBytesAndUsage(const TArray<uint8>& Bytes, con
 	float Value = 0;
 	FString ErrorMessage;
 	if (ParseAnalogFromBytesAndUsageChecked(Bytes, UsagePage, Usage, AnalogMin, AnalogMax, Value, ErrorMessage))
+	{
+		return Value;
+	}
+
+	return 0;
+}
+
+bool UUnHIDDevice::ParseUnsignedIntegerFromBytesAndUsageChecked(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, int64& Value, FString& ErrorMessage)
+{
+	FUnHIDDeviceDescriptorReports DeviceDescriptorReports;
+	if (!GetDescriptorReports(DeviceDescriptorReports, ErrorMessage))
+	{
+		return false;
+	}
+
+	FUnHIDDeviceDescriptorReportItem DescriptorReportItem;
+
+	if (!UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(DeviceDescriptorReports.Inputs, UsagePage, Usage, DescriptorReportItem))
+	{
+		if (!UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(DeviceDescriptorReports.Features, UsagePage, Usage, DescriptorReportItem))
+		{
+			ErrorMessage = "Usage not found in Report Descriptor";
+			return false;
+		}
+	}
+
+
+	Value = UUnHIDBlueprintFunctionLibrary::UnHIDParseUnsignedIntegerFromBytes(Bytes, DescriptorReportItem.BitOffset, DescriptorReportItem.BitSize);
+	return true;
+}
+
+int64 UUnHIDDevice::ParseUnsignedIntegerFromBytesAndUsage(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage)
+{
+	int64 Value = 0;
+	FString ErrorMessage;
+	if (ParseUnsignedIntegerFromBytesAndUsageChecked(Bytes, UsagePage, Usage, Value, ErrorMessage))
+	{
+		return Value;
+	}
+
+	return 0;
+}
+
+bool UUnHIDDevice::ParseSignedIntegerFromBytesAndUsageChecked(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, int64& Value, FString& ErrorMessage)
+{
+	FUnHIDDeviceDescriptorReports DeviceDescriptorReports;
+	if (!GetDescriptorReports(DeviceDescriptorReports, ErrorMessage))
+	{
+		return false;
+	}
+
+	FUnHIDDeviceDescriptorReportItem DescriptorReportItem;
+
+	if (!UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(DeviceDescriptorReports.Inputs, UsagePage, Usage, DescriptorReportItem))
+	{
+		if (!UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(DeviceDescriptorReports.Features, UsagePage, Usage, DescriptorReportItem))
+		{
+			ErrorMessage = "Usage not found in Report Descriptor";
+			return false;
+		}
+	}
+
+
+	Value = UUnHIDBlueprintFunctionLibrary::UnHIDParseSignedIntegerFromBytes(Bytes, DescriptorReportItem.BitOffset, DescriptorReportItem.BitSize);
+	return true;
+}
+
+int64 UUnHIDDevice::ParseSignedIntegerFromBytesAndUsage(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage)
+{
+	int64 Value = 0;
+	FString ErrorMessage;
+	if (ParseSignedIntegerFromBytesAndUsageChecked(Bytes, UsagePage, Usage, Value, ErrorMessage))
 	{
 		return Value;
 	}

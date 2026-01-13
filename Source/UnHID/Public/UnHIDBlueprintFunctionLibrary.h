@@ -119,7 +119,7 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Multiple Devices by Usage filter"), Category = "UnHID")
 	static TArray<UUnHIDDevice*> UnHIDOpenDevicesByUsageFilter(const int32 UsagePage, const int32 Usage, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, TArray<FString>& ErrorMessages);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Device by Usage filter with HexStrings"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Device by Usage filter with HexStrings", AutoCreateRefTerm = "InUnHIDReadDynamicDelegate"), Category = "UnHID")
 	static UUnHIDDevice* UnHIDOpenDeviceByUsageFilterHexStrings(const FString& UsagePageHexString, const FString& UsageHexString, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, FString& ErrorMessage);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Open Multiple Devices by Usage filter with HexStrings"), Category = "UnHID")
@@ -168,4 +168,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Assemble Report"), Category = "UnHID")
 	static TArray<uint8> UnHIDAssembleReport(const int32 Size, const uint8 ReportID, const TArray<FUnHIDReportItem>& ReportItems);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get ReportID from DescriptorReports and CollectionUsage"), Category = "UnHID")
+	static uint8 UnHIDGetReportIDFromDescriptorReportsAndCollectionUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage);
 };

@@ -951,3 +951,19 @@ TArray<uint8> UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(const int32 Si
 
 	return Report;
 }
+
+uint8 UUnHIDBlueprintFunctionLibrary::UnHIDGetReportIDFromDescriptorReportsAndCollectionUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage)
+{
+	for (const FUnHIDDeviceDescriptorReport& UnHIDDeviceDescriptorReport : UnHIDDescriptorReports)
+	{
+		for (const FUnHIDDeviceDescriptorReportItem& UnHIDDeviceDescriptorReportItem : UnHIDDeviceDescriptorReport.Items)
+		{
+			if (UnHIDDeviceDescriptorReportItem.UsagePage == UsagePage && UnHIDDeviceDescriptorReportItem.CollectionUsage.Contains(Usage))
+			{
+				return UnHIDDeviceDescriptorReport.ReportId;
+			}
+		}
+	}
+
+	return 0;
+}
