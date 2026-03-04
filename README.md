@@ -18,7 +18,17 @@ Join the discord server for support: https://discord.gg/NWyXyf3tMq
 * A virtual input system that can be injected with the data coming from the HID devices
 * Debug tools for managing devices, accessing the official HID tables (HUT) and testing the virtual input system.
 
-## Quickstart
+## Usage
+
+We are going to cover 3 examples:
+
+* Managing the Eject key of a multimedia keyboard
+* Reading the analog axis of a flight simulator joystick
+* Setting the color of lights of a gaming mouse
+* Injecting data in the virtual input system
+
+## Debug tools
 
 ## Commercial Support
 
+Commercial support is offered by Blitter S.r.l. (Italy). Contact the admin of the discord server (rdeioris).
