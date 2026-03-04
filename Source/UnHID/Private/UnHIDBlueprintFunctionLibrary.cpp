@@ -335,12 +335,12 @@ TArray<UUnHIDDevice*> UUnHIDBlueprintFunctionLibrary::UnHIDOpenDevicesByUsageFil
 	return UnHIDDevices;
 }
 
-UUnHIDDevice* UUnHIDBlueprintFunctionLibrary::UnHIDOpenDeviceByUsageFilterHexStrings(const FString& UsagePageHexString, const FString& UsageHexString, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, FString& ErrorMessage)
+UUnHIDDevice* UUnHIDBlueprintFunctionLibrary::UnHIDOpenDeviceByUsageFilterHexString(const FString& UsagePageHexString, const FString& UsageHexString, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, FString& ErrorMessage)
 {
 	return UnHIDOpenDeviceByUsageFilter(UnHIDHexStringToInt32(UsagePageHexString), UnHIDHexStringToInt32(UsageHexString), InUnHIDReadDynamicDelegate, ErrorMessage);
 }
 
-TArray<UUnHIDDevice*> UUnHIDBlueprintFunctionLibrary::UnHIDOpenDevicesByUsageFilterHexStrings(const FString& UsagePageHexString, const FString& UsageHexString, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, TArray<FString>& ErrorMessages)
+TArray<UUnHIDDevice*> UUnHIDBlueprintFunctionLibrary::UnHIDOpenDevicesByUsageFilterHexString(const FString& UsagePageHexString, const FString& UsageHexString, const FUnHIDReadDynamicDelegate& InUnHIDReadDynamicDelegate, TArray<FString>& ErrorMessages)
 {
 	return UnHIDOpenDevicesByUsageFilter(UnHIDHexStringToInt32(UsagePageHexString), UnHIDHexStringToInt32(UsageHexString), InUnHIDReadDynamicDelegate, ErrorMessages);
 }
@@ -450,9 +450,11 @@ FUnHIDDeviceDescriptorReports UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFro
 	{
 		int64 UsagePage = 0;
 		int64 LogicalMinimum = 0;
-		int64 LogicalMaximum = 0;
-		int64 PhysicalMinimum = 0;
-		int64 PhysicalMaximum = 0;
+		// if minimum >= 0 than maximum is unsigned
+		TPair<int64, int64>  LogicalMaximum = { 0, 0 };
+		int64  PhysicalMinimum = 0;
+		// if minimum >= 0 than maximum is unsigned
+		TPair<int64, int64>  PhysicalMaximum = { 0, 0 };
 		int64 UnitExponent = 0;
 		int64 Unit = 0;
 		int64 ReportSize = 0;
@@ -538,9 +540,9 @@ FUnHIDDeviceDescriptorReports UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFro
 		DescriptorReportItem.UsageMinimum = LocalState.UsageMinimum;
 		DescriptorReportItem.UsageMaximum = LocalState.UsageMaximum;
 		DescriptorReportItem.LogicalMinimum = GlobalState.LogicalMinimum;
-		DescriptorReportItem.LogicalMaximum = GlobalState.LogicalMaximum;
+		DescriptorReportItem.LogicalMaximum = DescriptorReportItem.LogicalMinimum >= 0 ? GlobalState.LogicalMaximum.Key : GlobalState.LogicalMaximum.Value;
 		DescriptorReportItem.PhysicalMinimum = GlobalState.PhysicalMinimum;
-		DescriptorReportItem.PhysicalMaximum = GlobalState.PhysicalMaximum;
+		DescriptorReportItem.PhysicalMaximum = DescriptorReportItem.PhysicalMinimum >= 0 ? GlobalState.PhysicalMaximum.Key : GlobalState.PhysicalMaximum.Value;
 		DescriptorReportItem.UnitExponent = GlobalState.UnitExponent;
 		DescriptorReportItem.Unit = GlobalState.Unit;
 
@@ -565,7 +567,7 @@ FUnHIDDeviceDescriptorReports UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFro
 		const uint8 ItemTag = (CurrentByte >> 4) & 0xF;
 
 		uint64 UnsignedValue = 0;
-		uint64 SignedValue = 0;
+		int64 SignedValue = 0;
 
 		if (ItemTag == 0xF)
 		{
@@ -667,13 +669,13 @@ FUnHIDDeviceDescriptorReports UUnHIDBlueprintFunctionLibrary::UnHIDGetReportsFro
 				GlobalStack.Last().LogicalMinimum = SignedValue;
 				break;
 			case EUnHIDReportDescriptorGlobalItems::LogicalMaximum:
-				GlobalStack.Last().LogicalMaximum = SignedValue;
+				GlobalStack.Last().LogicalMaximum = { UnsignedValue, SignedValue };
 				break;
 			case EUnHIDReportDescriptorGlobalItems::PhysicalMinimum:
 				GlobalStack.Last().PhysicalMinimum = SignedValue;
 				break;
 			case EUnHIDReportDescriptorGlobalItems::PhysicalMaximum:
-				GlobalStack.Last().PhysicalMaximum = SignedValue;
+				GlobalStack.Last().PhysicalMaximum = { UnsignedValue, SignedValue };
 				break;
 			case EUnHIDReportDescriptorGlobalItems::UnitExponent:
 				GlobalStack.Last().UnitExponent = SignedValue;
@@ -786,6 +788,21 @@ TArray<bool> UUnHIDBlueprintFunctionLibrary::UnHIDParseBitmaskFromBytes(const TA
 	}
 
 	return Bitmask;
+}
+
+bool UUnHIDBlueprintFunctionLibrary::UnHIDParseBitFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset)
+{
+	const uint64 BitIndex = BitOffset;
+	const uint64 ByteIndex = BitIndex / 8;
+	const uint64 BitInByte = BitIndex % 8;
+
+	if (!Bytes.IsValidIndex(ByteIndex))
+	{
+		return false;
+	}
+
+	const uint8 Bit = (Bytes[ByteIndex] >> BitInByte) & 1;
+	return Bit == 1;
 }
 
 int64 UUnHIDBlueprintFunctionLibrary::UnHIDParseUnsignedIntegerFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset, const int64 BitSize)
@@ -952,13 +969,13 @@ TArray<uint8> UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReport(const int32 Si
 	return Report;
 }
 
-uint8 UUnHIDBlueprintFunctionLibrary::UnHIDGetReportIDFromDescriptorReportsAndCollectionUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage)
+uint8 UUnHIDBlueprintFunctionLibrary::UnHIDGetReportIdFromDescriptorReportsAndCollectionUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 CollectionUsage, const int32 Usage)
 {
 	for (const FUnHIDDeviceDescriptorReport& UnHIDDeviceDescriptorReport : UnHIDDescriptorReports)
 	{
 		for (const FUnHIDDeviceDescriptorReportItem& UnHIDDeviceDescriptorReportItem : UnHIDDeviceDescriptorReport.Items)
 		{
-			if (UnHIDDeviceDescriptorReportItem.UsagePage == UsagePage && UnHIDDeviceDescriptorReportItem.CollectionUsage.Contains(Usage))
+			if (UnHIDDeviceDescriptorReportItem.UsagePage == UsagePage && UnHIDDeviceDescriptorReportItem.CollectionUsage.Contains(CollectionUsage) && UnHIDDeviceDescriptorReportItem.Usage.Contains(Usage))
 			{
 				return UnHIDDeviceDescriptorReport.ReportId;
 			}
@@ -966,4 +983,22 @@ uint8 UUnHIDBlueprintFunctionLibrary::UnHIDGetReportIDFromDescriptorReportsAndCo
 	}
 
 	return 0;
+}
+
+bool UUnHIDBlueprintFunctionLibrary::UnHIDGetReportIdAndSizeFromDescriptorReportsAndCollectionUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 CollectionUsage, const int32 Usage, uint8& ReportId, int32& Size)
+{
+	for (const FUnHIDDeviceDescriptorReport& UnHIDDeviceDescriptorReport : UnHIDDescriptorReports)
+	{
+		for (const FUnHIDDeviceDescriptorReportItem& UnHIDDeviceDescriptorReportItem : UnHIDDeviceDescriptorReport.Items)
+		{
+			if (UnHIDDeviceDescriptorReportItem.UsagePage == UsagePage && UnHIDDeviceDescriptorReportItem.CollectionUsage.Contains(CollectionUsage) && UnHIDDeviceDescriptorReportItem.Usage.Contains(Usage))
+			{
+				ReportId = UnHIDDeviceDescriptorReport.ReportId;
+				Size = UnHIDDeviceDescriptorReport.NumBytes;
+				return true;
+			}
+		}
+	}
+
+	return false;
 }

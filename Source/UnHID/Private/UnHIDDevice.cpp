@@ -424,6 +424,11 @@ float UUnHIDDevice::ParseAnalogFromBytesAndUsage(const TArray<uint8>& Bytes, con
 	return 0;
 }
 
+float UUnHIDDevice::ParseAnalogFromBytesAndUsageHexString(const TArray<uint8>& Bytes, const FString& UsagePageHexString, const FString& UsageHexString, const float AnalogMin, const float AnalogMax)
+{
+	return ParseAnalogFromBytesAndUsage(Bytes, UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsagePageHexString), UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsageHexString), AnalogMin, AnalogMax);
+}
+
 bool UUnHIDDevice::ParseUnsignedIntegerFromBytesAndUsageChecked(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, int64& Value, FString& ErrorMessage)
 {
 	FUnHIDDeviceDescriptorReports DeviceDescriptorReports;
@@ -479,8 +484,30 @@ bool UUnHIDDevice::ParseSignedIntegerFromBytesAndUsageChecked(const TArray<uint8
 		}
 	}
 
-
 	Value = UUnHIDBlueprintFunctionLibrary::UnHIDParseSignedIntegerFromBytes(Bytes, DescriptorReportItem.BitOffset, DescriptorReportItem.BitSize);
+	return true;
+}
+
+bool UUnHIDDevice::ParseBoolFromBytesAndUsageChecked(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, bool& Value, FString& ErrorMessage)
+{
+	FUnHIDDeviceDescriptorReports DeviceDescriptorReports;
+	if (!GetDescriptorReports(DeviceDescriptorReports, ErrorMessage))
+	{
+		return false;
+	}
+
+	FUnHIDDeviceDescriptorReportItem DescriptorReportItem;
+
+	if (!UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(DeviceDescriptorReports.Inputs, UsagePage, Usage, DescriptorReportItem))
+	{
+		if (!UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(DeviceDescriptorReports.Features, UsagePage, Usage, DescriptorReportItem))
+		{
+			ErrorMessage = "Usage not found in Report Descriptor";
+			return false;
+		}
+	}
+
+	Value = UUnHIDBlueprintFunctionLibrary::UnHIDParseBitFromBytes(Bytes, DescriptorReportItem.BitOffset);
 	return true;
 }
 
@@ -494,4 +521,136 @@ int64 UUnHIDDevice::ParseSignedIntegerFromBytesAndUsage(const TArray<uint8>& Byt
 	}
 
 	return 0;
+}
+
+bool UUnHIDDevice::ParseBoolFromBytesAndUsage(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage)
+{
+	bool Value = false;
+	FString ErrorMessage;
+	if (ParseBoolFromBytesAndUsageChecked(Bytes, UsagePage, Usage, Value, ErrorMessage))
+	{
+		return Value;
+	}
+
+	return false;
+}
+
+bool UUnHIDDevice::ParseBoolFromBytesAndUsageHexString(const TArray<uint8>& Bytes, const FString& UsagePageHexString, const FString& UsageHexString)
+{
+	return ParseBoolFromBytesAndUsage(Bytes, UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsagePageHexString), UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsageHexString));
+}
+
+int64 UUnHIDDevice::ParseUnsignedIntegerFromBytesAndUsageHexString(const TArray<uint8>& Bytes, const FString& UsagePageHexString, const FString& UsageHexString)
+{
+	return ParseUnsignedIntegerFromBytesAndUsage(Bytes, UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsagePageHexString), UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsageHexString));
+}
+
+int64 UUnHIDDevice::ParseSignedIntegerFromBytesAndUsageHexString(const TArray<uint8>& Bytes, const FString& UsagePageHexString, const FString& UsageHexString)
+{
+	return ParseSignedIntegerFromBytesAndUsage(Bytes, UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsagePageHexString), UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsageHexString));
+}
+
+bool UUnHIDDevice::ParseBitmaskFromBytesAndUsageChecked(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, TArray<bool>& Value, FString& ErrorMessage)
+{
+	FUnHIDDeviceDescriptorReports DeviceDescriptorReports;
+	if (!GetDescriptorReports(DeviceDescriptorReports, ErrorMessage))
+	{
+		return false;
+	}
+
+	FUnHIDDeviceDescriptorReportItem DescriptorReportItem;
+
+	if (!UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(DeviceDescriptorReports.Inputs, UsagePage, Usage, DescriptorReportItem))
+	{
+		if (!UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(DeviceDescriptorReports.Features, UsagePage, Usage, DescriptorReportItem))
+		{
+			ErrorMessage = "Usage not found in Report Descriptor";
+			return false;
+		}
+	}
+
+	if (DescriptorReportItem.BitSize != 1)
+	{
+		ErrorMessage = "DescriptorReportItem has BitSize != 1";
+		return false;
+	}
+
+	Value = UUnHIDBlueprintFunctionLibrary::UnHIDParseBitmaskFromBytes(Bytes, DescriptorReportItem.BitOffset, DescriptorReportItem.Count);
+	return true;
+}
+
+TArray<bool> UUnHIDDevice::ParseBitmaskFromBytesAndUsage(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage)
+{
+	TArray<bool> Value;
+	FString ErrorMessage;
+	if (ParseBitmaskFromBytesAndUsageChecked(Bytes, UsagePage, Usage, Value, ErrorMessage))
+	{
+		return Value;
+	}
+
+	return TArray<bool>();
+}
+
+TArray<bool> UUnHIDDevice::ParseBitmaskFromBytesAndUsageHexString(const TArray<uint8>& Bytes, const FString& UsagePageHexString, const FString& UsageHexString)
+{
+	return ParseBitmaskFromBytesAndUsage(Bytes, UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsagePageHexString), UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsageHexString));
+}
+
+bool UUnHIDDevice::GetReportIdFromFeaturesCollectionUsageChecked(const int32 UsagePage, const int32 CollectionUsage, const int32 Usage, uint8& ReportId, FString& ErrorMessage)
+{
+	FUnHIDDeviceDescriptorReports DeviceDescriptorReports;
+	if (!GetDescriptorReports(DeviceDescriptorReports, ErrorMessage))
+	{
+		return false;
+	}
+
+	ReportId = UUnHIDBlueprintFunctionLibrary::UnHIDGetReportIdFromDescriptorReportsAndCollectionUsage(DeviceDescriptorReports.Features, UsagePage, CollectionUsage, Usage);
+	if (ReportId == 0)
+	{
+		ErrorMessage = "Unable to find ReportId";
+		return false;
+	}
+
+	return true;
+}
+
+uint8 UUnHIDDevice::GetReportIdFromFeaturesCollectionUsage(const int32 UsagePage, const int32 CollectionUsage, const int32 Usage)
+{
+	uint8 ReportId;
+	FString ErrorMessage;
+	if (GetReportIdFromFeaturesCollectionUsageChecked(UsagePage, CollectionUsage, Usage, ReportId, ErrorMessage))
+	{
+		return ReportId;
+	}
+
+	return 0;
+}
+
+uint8 UUnHIDDevice::GetReportIdFromFeaturesCollectionUsageHexString(const FString& UsagePageHexString, const FString& CollectionUsageHexString, const FString& UsageHexString)
+{
+	return GetReportIdFromFeaturesCollectionUsage(UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsagePageHexString), UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(CollectionUsageHexString), UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsageHexString));
+}
+
+bool UUnHIDDevice::GetFeatureReportBytesFromCollectionUsage(const int32 UsagePage, const int32 CollectionUsage, const int32 Usage, TArray<uint8>& Bytes, FString& ErrorMessage)
+{
+	FUnHIDDeviceDescriptorReports DeviceDescriptorReports;
+	if (!GetDescriptorReports(DeviceDescriptorReports, ErrorMessage))
+	{
+		return false;
+	}
+
+	uint8 ReportId;
+	int32 Size;
+	if (!UUnHIDBlueprintFunctionLibrary::UnHIDGetReportIdAndSizeFromDescriptorReportsAndCollectionUsage(DeviceDescriptorReports.Features, UsagePage, CollectionUsage, Usage, ReportId, Size))
+	{
+		ErrorMessage = "Unable to find ReportId";
+		return false;
+	}
+
+	return GetFeatureReportBytes(ReportId, Size, Bytes, ErrorMessage);
+}
+
+bool UUnHIDDevice::GetFeatureReportBytesFromCollectionUsageHexString(const FString& UsagePageHexString, const FString& CollectionUsageHexString, const FString& UsageHexString, TArray<uint8>& Bytes, FString& ErrorMessage)
+{
+	return GetFeatureReportBytesFromCollectionUsage(UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsagePageHexString), UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(CollectionUsageHexString), UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsageHexString), Bytes, ErrorMessage);
 }
