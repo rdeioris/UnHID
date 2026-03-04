@@ -6,6 +6,8 @@ It allows advanced access to keyboards, mices, gamepads, joysticks, lighting and
 
 While generally applied to USB devices, HID works over various transports (included bluetooth and I2C). This plugin is transport agnostic.
 
+Join the discord server for support: https://discord.gg/NWyXyf3tMq
+
 ## Main features
 
 * Enumeration and filtering of HID devices
@@ -19,3 +21,4 @@ While generally applied to USB devices, HID works over various transports (inclu
 ## Quickstart
 
 ## Commercial Support
+
