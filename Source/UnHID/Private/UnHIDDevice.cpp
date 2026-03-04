@@ -654,3 +654,27 @@ bool UUnHIDDevice::GetFeatureReportBytesFromCollectionUsageHexString(const FStri
 {
 	return GetFeatureReportBytesFromCollectionUsage(UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsagePageHexString), UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(CollectionUsageHexString), UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(UsageHexString), Bytes, ErrorMessage);
 }
+
+TArray<uint8> UUnHIDDevice::AssembleFeatureReportFromDescriptorReportsAndCollectionUsage(const int32 UsagePage, const int32 CollectionUsage, const TArray<FUnHIDReportItemByUsage>& ReportItemsByUsage)
+{
+	FUnHIDDeviceDescriptorReports DeviceDescriptorReports;
+	FString ErrorMessage;
+	if (!GetDescriptorReports(DeviceDescriptorReports, ErrorMessage))
+	{
+		return {};
+	}
+
+	return UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReportFromDescriptorReportsAndCollectionUsage(DeviceDescriptorReports.Features, UsagePage, CollectionUsage, ReportItemsByUsage);
+}
+
+TArray<uint8> UUnHIDDevice::AssembleFeatureReportFromDescriptorReportsAndCollectionUsageHexString(const FString& UsagePageHexString, const FString& CollectionUsageHexString, const TArray<FUnHIDReportItemByUsageHexString>& ReportItemsByUsageHexString)
+{
+	FUnHIDDeviceDescriptorReports DeviceDescriptorReports;
+	FString ErrorMessage;
+	if (!GetDescriptorReports(DeviceDescriptorReports, ErrorMessage))
+	{
+		return {};
+	}
+
+	return UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReportFromDescriptorReportsAndCollectionUsageHexString(DeviceDescriptorReports.Features, UsagePageHexString, CollectionUsageHexString, ReportItemsByUsageHexString);
+}

@@ -885,6 +885,34 @@ bool UUnHIDBlueprintFunctionLibrary::UnHIDGetBitOffsetAndSizeFromDescriptorRepor
 	return false;
 }
 
+bool UUnHIDBlueprintFunctionLibrary::UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndCollectionUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 CollectionUsage, const int32 Usage, int64& BitOffset, int64& BitSize)
+{
+	const bool bHasReportIdPrefix = UnHIDDescriptorReports.Num() > 1 || (UnHIDDescriptorReports.Num() == 1 && UnHIDDescriptorReports[0].ReportId != 0);
+	for (const FUnHIDDeviceDescriptorReport& UnHIDDeviceDescriptorReport : UnHIDDescriptorReports)
+	{
+		for (const FUnHIDDeviceDescriptorReportItem& UnHIDDeviceDescriptorReportItem : UnHIDDeviceDescriptorReport.Items)
+		{
+			if (UnHIDDeviceDescriptorReportItem.UsagePage == UsagePage && UnHIDDeviceDescriptorReportItem.CollectionUsage.Contains(CollectionUsage))
+			{
+				if (UnHIDDeviceDescriptorReportItem.Usage.Contains(Usage))
+				{
+					BitOffset = (bHasReportIdPrefix ? 8 : 0) + UnHIDDeviceDescriptorReportItem.BitOffset + (UnHIDDeviceDescriptorReportItem.BitSize * UnHIDDeviceDescriptorReportItem.Usage.IndexOfByKey(Usage));
+					BitSize = UnHIDDeviceDescriptorReportItem.BitSize;
+					return true;
+				}
+				else if (Usage >= UnHIDDeviceDescriptorReportItem.UsageMinimum && Usage <= UnHIDDeviceDescriptorReportItem.UsageMaximum)
+				{
+					BitOffset = (bHasReportIdPrefix ? 8 : 0) + UnHIDDeviceDescriptorReportItem.BitOffset + (UnHIDDeviceDescriptorReportItem.BitSize * UnHIDDeviceDescriptorReportItem.Usage.Num()) + (UnHIDDeviceDescriptorReportItem.BitSize * (Usage - UnHIDDeviceDescriptorReportItem.UsageMinimum));
+					BitSize = UnHIDDeviceDescriptorReportItem.BitSize;
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 bool UUnHIDBlueprintFunctionLibrary::UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage, FUnHIDDeviceDescriptorReportItem& DescriptorReportItem)
 {
 	const bool bHasReportIdPrefix = UnHIDDescriptorReports.Num() > 1 || (UnHIDDescriptorReports.Num() == 1 && UnHIDDescriptorReports[0].ReportId != 0);
@@ -1001,4 +1029,56 @@ bool UUnHIDBlueprintFunctionLibrary::UnHIDGetReportIdAndSizeFromDescriptorReport
 	}
 
 	return false;
+}
+
+TArray<uint8> UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReportFromDescriptorReportsAndCollectionUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 CollectionUsage, const TArray<FUnHIDReportItemByUsage>& ReportItemsByUsage)
+{
+	TArray<FUnHIDReportItem> ReportItems;
+	uint8 ReportId = 0;
+	int32 Size = 0;
+
+	if (ReportItemsByUsage.Num() < 1)
+	{
+		return {};
+	}
+
+	if (!UnHIDGetReportIdAndSizeFromDescriptorReportsAndCollectionUsage(UnHIDDescriptorReports, UsagePage, CollectionUsage, ReportItemsByUsage[0].Usage, ReportId, Size))
+	{
+		return {};
+	}
+
+	for (const FUnHIDReportItemByUsage& ReportItemByUsage : ReportItemsByUsage)
+	{
+		int64 BitOffset;
+		int64 BitSize;
+		if (UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndCollectionUsage(UnHIDDescriptorReports, UsagePage, CollectionUsage, ReportItemByUsage.Usage, BitOffset, BitSize))
+		{
+			FUnHIDReportItem NewReportItem;
+			// we need to address for the bitoffset relative to the ReportId
+			NewReportItem.BitOffset = BitOffset - 8;
+			NewReportItem.BitSize = BitSize;
+			NewReportItem.Value = ReportItemByUsage.Value;
+			ReportItems.Add(MoveTemp(NewReportItem));
+		}
+	}
+
+
+	return UnHIDAssembleReport(Size, ReportId, ReportItems);
+}
+
+TArray<uint8> UUnHIDBlueprintFunctionLibrary::UnHIDAssembleReportFromDescriptorReportsAndCollectionUsageHexString(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const FString& UsagePageHexString, const FString& CollectionUsageHexString, const TArray<FUnHIDReportItemByUsageHexString>& ReportItemsByUsageHexString)
+{
+	TArray<FUnHIDReportItemByUsage> ReportItemsByUsage;
+	for (const FUnHIDReportItemByUsageHexString& ReportItemByUsageHexString : ReportItemsByUsageHexString)
+	{
+		FUnHIDReportItemByUsage ReportItemByUsage;
+
+		ReportItemByUsage.Usage = UnHIDHexStringToInt32(ReportItemByUsageHexString.UsageHexString);
+		ReportItemByUsage.Value = ReportItemByUsageHexString.Value;
+
+		ReportItemsByUsage.Add(MoveTemp(ReportItemByUsage));
+
+	}
+
+	return UnHIDAssembleReportFromDescriptorReportsAndCollectionUsage(UnHIDDescriptorReports, UnHIDHexStringToInt32(UsagePageHexString), UnHIDHexStringToInt32(CollectionUsageHexString), ReportItemsByUsage);
 }

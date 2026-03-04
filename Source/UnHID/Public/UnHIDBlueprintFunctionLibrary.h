@@ -166,6 +166,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get BitOffset and BitSize from DescriptorReports and Usage"), Category = "UnHID")
 	static bool UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage, int64& BitOffset, int64& BitSize);
 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get BitOffset and BitSize from DescriptorReports and CollectionUsage"), Category = "UnHID")
+	static bool UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndCollectionUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 CollectionUsage, const int32 Usage, int64& BitOffset, int64& BitSize);
+
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Descriptor Report Item from DescriptorReports and Usage"), Category = "UnHID")
 	static bool UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage, FUnHIDDeviceDescriptorReportItem& DescriptorReportItem);
 
@@ -175,6 +178,12 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get ReportId from DescriptorReports and CollectionUsage"), Category = "UnHID")
 	static uint8 UnHIDGetReportIdFromDescriptorReportsAndCollectionUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 CollectionUsage, const int32 Usage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get ReportId from DescriptorReports and CollectionUsage"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get ReportId and Size from DescriptorReports and CollectionUsage"), Category = "UnHID")
 	static bool UnHIDGetReportIdAndSizeFromDescriptorReportsAndCollectionUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 CollectionUsage, const int32 Usage, uint8& ReportId, int32& Size);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Assemble Report from DescriptorReports and CollectionUsage"), Category = "UnHID")
+	static TArray<uint8> UnHIDAssembleReportFromDescriptorReportsAndCollectionUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 CollectionUsage, const TArray<FUnHIDReportItemByUsage>& ReportItemsByUsage);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Assemble Report from DescriptorReports and CollectionUsage HexString"), Category = "UnHID")
+	static TArray<uint8> UnHIDAssembleReportFromDescriptorReportsAndCollectionUsageHexString(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const FString& UsagePageHexString, const FString& CollectionUsageHexString, const TArray<FUnHIDReportItemByUsageHexString>& ReportItemsByUsageHexString);
 };

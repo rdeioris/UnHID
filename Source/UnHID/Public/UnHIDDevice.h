@@ -149,6 +149,31 @@ struct FUnHIDDeviceDescriptorReports
 	TArray<FUnHIDDeviceDescriptorReport> Features;
 };
 
+USTRUCT(BlueprintType)
+struct FUnHIDReportItemByUsage
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+	int32 Usage = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+	int64 Value = 0;
+};
+
+USTRUCT(BlueprintType)
+struct FUnHIDReportItemByUsageHexString
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+	FString UsageHexString;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UnHID")
+	int64 Value = 0;
+};
+
+
 /**
  *
  */
@@ -197,58 +222,58 @@ public:
 	bool GetBitOffsetAndSizeFromDescriptorReportsAndUsage(const int32 UsagePage, const int32 Usage, int64& BitOffset, int64& BitSize, FString& ErrorMessage);
 
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Analog from Bytes and Usage Checked"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Analog from Bytes and Usage Checked"), Category = "UnHID")
 	bool ParseAnalogFromBytesAndUsageChecked(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, const float AnalogMin, const float AnalogMax, float& Value, FString& ErrorMessage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Analog from Bytes and Usage"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Analog from Bytes and Usage"), Category = "UnHID")
 	float ParseAnalogFromBytesAndUsage(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, const float AnalogMin = -1, const float AnalogMax = 1);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Analog from Bytes and Usage HexString"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Analog from Bytes and Usage HexString"), Category = "UnHID")
 	float ParseAnalogFromBytesAndUsageHexString(const TArray<uint8>& Bytes, const FString& UsagePageHexString, const FString& UsageHexString, const float AnalogMin = -1, const float AnalogMax = 1);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Unsigned Integer from Bytes and Usage Checked"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Unsigned Integer from Bytes and Usage Checked"), Category = "UnHID")
 	bool ParseUnsignedIntegerFromBytesAndUsageChecked(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, int64& Value, FString& ErrorMessage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Unsigned Integer from Bytes and Usage"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Unsigned Integer from Bytes and Usage"), Category = "UnHID")
 	int64 ParseUnsignedIntegerFromBytesAndUsage(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Unsigned Integer from Bytes and Usage HexString"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Unsigned Integer from Bytes and Usage HexString"), Category = "UnHID")
 	int64 ParseUnsignedIntegerFromBytesAndUsageHexString(const TArray<uint8>& Bytes, const FString& UsagePageHexString, const FString& UsageHexString);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Signed Integer from Bytes and Usage Checked"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Signed Integer from Bytes and Usage Checked"), Category = "UnHID")
 	bool ParseSignedIntegerFromBytesAndUsageChecked(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, int64& Value, FString& ErrorMessage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Signed Integer from Bytes and Usage"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Signed Integer from Bytes and Usage"), Category = "UnHID")
 	int64 ParseSignedIntegerFromBytesAndUsage(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Signed Integer from Bytes and Usage HexString"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Signed Integer from Bytes and Usage HexString"), Category = "UnHID")
 	int64 ParseSignedIntegerFromBytesAndUsageHexString(const TArray<uint8>& Bytes, const FString& UsagePageHexString, const FString& UsageHexString);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Bool from Bytes and Usage Checked"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Bool from Bytes and Usage Checked"), Category = "UnHID")
 	bool ParseBoolFromBytesAndUsageChecked(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, bool& Value, FString& ErrorMessage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Bool from Bytes and Usage"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Bool from Bytes and Usage"), Category = "UnHID")
 	bool ParseBoolFromBytesAndUsage(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Bool from Bytes and Usage HexString"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Bool from Bytes and Usage HexString"), Category = "UnHID")
 	bool ParseBoolFromBytesAndUsageHexString(const TArray<uint8>& Bytes, const FString& UsagePageHexString, const FString& UsageHexString);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Bitmask from Bytes and Usage Checked"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Bitmask from Bytes and Usage Checked"), Category = "UnHID")
 	bool ParseBitmaskFromBytesAndUsageChecked(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage, TArray<bool>& Value, FString& ErrorMessage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Bitmask from Bytes and Usage"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Bitmask from Bytes and Usage"), Category = "UnHID")
 	TArray<bool> ParseBitmaskFromBytesAndUsage(const TArray<uint8>& Bytes, const int32 UsagePage, const int32 Usage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Bitmask from Bytes and Usage HexString"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Parse Bitmask from Bytes and Usage HexString"), Category = "UnHID")
 	TArray<bool> ParseBitmaskFromBytesAndUsageHexString(const TArray<uint8>& Bytes, const FString& UsagePageHexString, const FString& UsageHexString);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get ReportId from Collection Usage Checked"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Get ReportId from Collection Usage Checked"), Category = "UnHID")
 	bool GetReportIdFromFeaturesCollectionUsageChecked(const int32 UsagePage, const int32 CollectionUsage, const int32 Usage, uint8& ReportId, FString& ErrorMessage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get ReportId from Collection Usage"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Get ReportId from Collection Usage"), Category = "UnHID")
 	uint8 GetReportIdFromFeaturesCollectionUsage(const int32 UsagePage, const int32 CollectionUsage, const int32 Usage);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get ReportId from Collection Usage HexString"), Category = "UnHID")
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Get ReportId from Collection Usage HexString"), Category = "UnHID")
 	uint8 GetReportIdFromFeaturesCollectionUsageHexString(const FString& UsagePageHexString, const FString& CollectionUsageHexString, const FString& UsageHexString);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Get Feature Report Bytes from Collection Usage"), Category = "UnHID")
@@ -256,6 +281,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Get Feature Report Bytes from Collection Usage HexString"), Category = "UnHID")
 	bool GetFeatureReportBytesFromCollectionUsageHexString(const FString& UsagePageHexString, const FString& CollectionUsageHexString, const FString& UsageHexString, TArray<uint8>& Bytes, FString& ErrorMessage);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Assemble Report from DescriptorReports and CollectionUsage"), Category = "UnHID")
+	TArray<uint8> AssembleFeatureReportFromDescriptorReportsAndCollectionUsage(const int32 UsagePage, const int32 CollectionUsage, const TArray<FUnHIDReportItemByUsage>& ReportItemsByUsage);
+
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHIDDevice Assemble Report from DescriptorReports and CollectionUsage HexString"), Category = "UnHID")
+	TArray<uint8> AssembleFeatureReportFromDescriptorReportsAndCollectionUsageHexString(const FString& UsagePageHexString, const FString& CollectionUsageHexString, const TArray<FUnHIDReportItemByUsageHexString>& ReportItemsByUsageHexString);
 
 protected:
 	void* HidDevice = nullptr;
