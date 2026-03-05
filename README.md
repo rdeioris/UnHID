@@ -29,9 +29,20 @@ We are going to cover 3 examples:
 * Setting the color of lights of a gaming mouse
 * Injecting data in the virtual input system
 
+### Step0: checking everything is working with the UnHID Dashboard
+
+Once the plugin is installed (if you are using a gthub source release, just clone it into the directory Plugins/ of your C++ project and regenerate the solution) you will find the Dashboard in
+the Tools/Debug menu:
+
+The Dashboard shows all of the detected HID devices on your system and by clicking on "Connect" you can start receiving (or sending) messages ("reports" in HID slang).
+
+NOTE: operating systems have various protection mechanisms for keyboards and mice, so if you plan to interact with them read the notes [below](#-Dealing-with-security-limitations-on-keyboards-and-mice) 
+
 ## Debug tools
 
 ## API
+
+## Dealing with security limitations on keyboards and mice
 
 ## Commercial Support
 
