@@ -1,6 +1,6 @@
 # UnHID
 
-![UnHID Logo](Docs/Images/UnHID_Logo768.png)
+![UnHID Logo](Docs/Images/UnHID_Logo256.png)
 
 UnHID is an Unreal Engine plugin for accessing the low-level HID (Human Interface Device) api of your operating system (Windows, Mac and Linux are supported).
 
