@@ -38,6 +38,18 @@ The Dashboard shows all of the detected HID devices on your system and by clicki
 
 NOTE: operating systems have various protection mechanisms for keyboards and mice, so if you plan to interact with them read the notes [below](#-Dealing-with-security-limitations-on-keyboards-and-mice) 
 
+If you a gamepad or joystick connected to your system, those are good candidates for a check:
+
+### Step1: Opening a Device
+
+### Step2: Parsing Reports
+
+### Step3: Dealing with a flight simulator joystick
+
+### Step4: Setting led colors on a gaming mouse
+
+### Step5: Injecting input events from the flight simulator joystick
+
 ## Debug tools
 
 ## API
