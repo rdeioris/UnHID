@@ -4,7 +4,7 @@
 
 UnHID is an Unreal Engine plugin for accessing the low-level HID (Human Interface Device) api of your operating system (Windows, Mac and Linux are supported).
 
-It allows advanced access to keyboards, mices, gamepads, joysticks, lighting and illumination devices, touchscreens, haptics and everything covered by the HID standard (https://www.usb.org/hid)
+It allows advanced access to keyboards, mices, gamepads, joysticks, lighting and illumination devices, touchscreens, haptics, steering wheels and everything covered by the HID standard (https://www.usb.org/hid)
 
 While generally applied to USB devices, HID works over various transports (included bluetooth and I2C). This plugin is transport agnostic.
 
