@@ -169,6 +169,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get BitOffset and BitSize from DescriptorReports and CollectionUsage"), Category = "UnHID")
 	static bool UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndCollectionUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 CollectionUsage, const int32 Usage, int64& BitOffset, int64& BitSize);
 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get BitOffset and BitSize from DescriptorReports and CollectionUsage with occurrence"), Category = "UnHID")
+	static bool UnHIDGetBitOffsetAndSizeFromDescriptorReportsAndCollectionUsageWithOccurrence(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 CollectionUsage, const int32 Usage, const int32 Occurrence, int64& BitOffset, int64& BitSize);
+
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Get Descriptor Report Item from DescriptorReports and Usage"), Category = "UnHID")
 	static bool UnHIDGetDescriptorReportItemFromDescriptorReportsAndUsage(const TArray<FUnHIDDeviceDescriptorReport>& UnHIDDescriptorReports, const int32 UsagePage, const int32 Usage, FUnHIDDeviceDescriptorReportItem& DescriptorReportItem);
 

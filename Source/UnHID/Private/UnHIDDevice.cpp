@@ -86,7 +86,7 @@ public:
 				const FString ErrorMessage = WCHAR_TO_TCHAR(hid_read_error(HidDevice));
 				FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([this, ErrorMessage]()
 					{
-						if (UnHIDDevice.IsValid())
+						if (UnHIDDevice.IsValid() && ReadNativeDelegate.IsBound())
 						{
 							ReadNativeDelegate.Execute(UnHIDDevice.Get(), {}, ErrorMessage);
 						}
@@ -104,7 +104,7 @@ public:
 
 			FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([this, HidMessage]()
 				{
-					if (UnHIDDevice.IsValid())
+					if (UnHIDDevice.IsValid() && ReadNativeDelegate.IsBound())
 					{
 						ReadNativeDelegate.Execute(UnHIDDevice.Get(), HidMessage, "");
 					}
