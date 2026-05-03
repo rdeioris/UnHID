@@ -40,7 +40,7 @@ NOTE: operating systems have various protection mechanisms for keyboards and mic
 
 If you have a gamepad or joystick connected to your system, those are good candidates for a check:
 
-### Step1: Opening a Device
+### Step1: Enumerating and Opening a Device
 
 ### Step2: Parsing Reports
 
