@@ -47,6 +47,131 @@ void FUnHIDEditorModule::ShutdownModule()
 	// we call this function before unloading the module.
 }
 
+struct FUnHIDEditorHUTUsage
+{
+	FString Name;
+	TArray<FString> Kinds;
+};
+
+struct FUnHIDEditorHUTUsagePage
+{
+	FString Name;
+	TMap <int64, FUnHIDEditorHUTUsage> UsageMap;
+};
+
+
+
+const TMap<int64, FUnHIDEditorHUTUsagePage>& GetHUTMap()
+{
+	static TMap<int64, FUnHIDEditorHUTUsagePage> HUTMap;
+
+	if (!HUTMap.IsEmpty())
+	{
+		return HUTMap;
+	}
+
+	const FString PluginBaseDir = IPluginManager::Get().FindPlugin("UnHID")->GetBaseDir();
+
+	const FString HUTFilename = FPaths::Combine(PluginBaseDir, "Resources", "HidUsageTables.json");
+
+	TArray<uint8> HUTData;
+
+	if (!FFileHelper::LoadFileToArray(HUTData, *HUTFilename))
+	{
+		return HUTMap;
+	}
+
+	TSharedPtr<FJsonValue> RootValue;
+
+	FString HUTJsonString;
+
+	FFileHelper::BufferToString(HUTJsonString, HUTData.GetData(), HUTData.Num());
+
+	TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(HUTJsonString);
+	if (!FJsonSerializer::Deserialize(JsonReader, RootValue))
+	{
+		return HUTMap;
+	}
+
+	TSharedPtr<FJsonObject> JsonRootObject = RootValue->AsObject();
+	if (!JsonRootObject)
+	{
+		return HUTMap;
+	}
+
+	const TArray<TSharedPtr<FJsonValue>>* UsagePagesJsonArray;
+	if (!JsonRootObject->TryGetArrayField(TEXT("UsagePages"), UsagePagesJsonArray))
+	{
+		return HUTMap;
+	}
+
+	for (const TSharedPtr<FJsonValue>& UsagePageJson : *UsagePagesJsonArray)
+	{
+		if (!UsagePageJson.IsValid())
+		{
+			continue;
+		}
+
+		TSharedPtr<FJsonObject>* UsagePageObject = nullptr;
+		if (!UsagePageJson->TryGetObject(UsagePageObject))
+		{
+			continue;
+		}
+
+		int64 UsagePageId;
+		if (!((*UsagePageObject)->TryGetNumberField(TEXT("Id"), UsagePageId)))
+		{
+			continue;
+		}
+
+		FUnHIDEditorHUTUsagePage NewHUTUsagePage;
+
+		if (!((*UsagePageObject)->TryGetStringField(TEXT("Name"), NewHUTUsagePage.Name)))
+		{
+			continue;
+		}
+
+		FUnHIDEditorHUTUsagePage& HUTUsagePage = HUTMap.Add(UsagePageId, NewHUTUsagePage);
+
+		const TArray<TSharedPtr<FJsonValue>>* UsageIdsJsonArray;
+		if (!((*UsagePageObject)->TryGetArrayField(TEXT("UsageIds"), UsageIdsJsonArray)))
+		{
+			continue;
+		}
+
+		for (const TSharedPtr<FJsonValue>& UsageIdJson : *UsageIdsJsonArray)
+		{
+			TSharedPtr<FJsonObject>* UsageIdObject = nullptr;
+			if (!UsageIdJson->TryGetObject(UsageIdObject))
+			{
+				continue;
+			}
+
+			int64 UsageId;
+			if (!((*UsageIdObject)->TryGetNumberField(TEXT("Id"), UsageId)))
+			{
+				continue;
+			}
+
+			FUnHIDEditorHUTUsage HUTUsage;
+
+			if (!((*UsageIdObject)->TryGetStringField(TEXT("Name"), HUTUsage.Name)))
+			{
+				continue;
+			}
+
+			if (!((*UsageIdObject)->TryGetStringArrayField(TEXT("Kinds"), HUTUsage.Kinds)))
+			{
+				HUTUsage.Kinds = {};
+			}
+
+			HUTUsagePage.UsageMap.Add(UsageId, HUTUsage);
+		}
+	}
+
+	return HUTMap;
+}
+
 struct FUnHIDEditorDeviceInfo : public TSharedFromThis<FUnHIDEditorDeviceInfo>
 {
 	FUnHIDDeviceInfo DeviceInfo;
@@ -116,9 +241,27 @@ class SUnHIDDashboard : public SCompoundWidget
 		}
 	}
 
+	FString HUTUsageToString(const TMap<int64, FUnHIDEditorHUTUsagePage>& HUTMap, const int64 UsagePage, const int64 Usage)
+	{
+		FString Value;
+		if (HUTMap.Contains(UsagePage) && HUTMap[UsagePage].UsageMap.Contains(Usage))
+		{
+			Value = HUTMap[UsagePage].UsageMap[Usage].Name;
+		}
+
+		if (Value.IsEmpty())
+		{
+			return "";
+		}
+
+		return Value;
+	}
+
 	void Construct(const FArguments& InArgs)
 	{
 		RefreshHIDDeviceInfos();
+
+		const TMap<int64, FUnHIDEditorHUTUsagePage>& HUTMap = GetHUTMap();
 
 		ChildSlot[
 			SNew(SVerticalBox)
@@ -161,12 +304,12 @@ class SUnHIDDashboard : public SCompoundWidget
 											.DefaultLabel(FText::FromString("Usage Page"))
 											.SortMode_Lambda([this] {return HIDDeviceInfosUsagePageSortMode; })
 											.OnSort(this, &SUnHIDDashboard::SortHIDDeviceInfos)
-											.FillWidth(0.3)
+											.FillWidth(0.2)
 											+ SHeaderRow::Column("Usage")
 											.DefaultLabel(FText::FromString("Usage"))
 											.SortMode_Lambda([this] {return HIDDeviceInfosUsageSortMode; })
 											.OnSort(this, &SUnHIDDashboard::SortHIDDeviceInfos)
-											.FillWidth(0.1)
+											.FillWidth(0.2)
 										)
 										.OnSelectionChanged(this, &SUnHIDDashboard::ChangeSelectedHIDDeviceInfo)
 								]
@@ -308,7 +451,7 @@ class SUnHIDDashboard : public SCompoundWidget
 														]
 														+ SHorizontalBox::Slot().FillWidth(0.8)
 														[
-															SNew(SEditableTextBox).Text_Lambda([this] { return FText::FromString(FString::Printf(TEXT("0x%02X"), SelectedDeviceInfo.DeviceInfo.Usage)); }).IsReadOnly(true)
+															SNew(SEditableTextBox).Text_Lambda([this, &HUTMap] { return FText::FromString(FString::Printf(TEXT("0x%02X (%s)"), SelectedDeviceInfo.DeviceInfo.Usage, *HUTUsageToString(HUTMap, SelectedDeviceInfo.DeviceInfo.UsagePage, SelectedDeviceInfo.DeviceInfo.Usage))); }).IsReadOnly(true)
 														]
 												]
 											+ SVerticalBox::Slot().AutoHeight().Padding(2)
@@ -435,7 +578,7 @@ class SUnHIDDashboard : public SCompoundWidget
 					CollectionUsages += FString::Printf(TEXT("0x%02X, "), Usage);
 				}
 				DescriptorReportItems += FString::Printf(TEXT("\t\t\t\tBitOffset: %lld, BitSize: %lld, Count: %lld, UsagePage: 0x%02X, Collection Usage: [%s], Usage: [%s], UsageMinimum: 0x%02X, UsageMaximum: 0x%02X, LogicalMinimum: %lld, LogicalMaximum: %lld\n"),
-					DescriptorReportItem.BitOffset, DescriptorReportItem.BitSize, DescriptorReportItem.Count, 
+					DescriptorReportItem.BitOffset, DescriptorReportItem.BitSize, DescriptorReportItem.Count,
 					DescriptorReportItem.UsagePage, *CollectionUsages.LeftChop(2), *Usages.LeftChop(2),
 					DescriptorReportItem.UsageMinimum, DescriptorReportItem.UsageMaximum,
 					DescriptorReportItem.LogicalMinimum, DescriptorReportItem.LogicalMaximum);
@@ -447,6 +590,8 @@ class SUnHIDDashboard : public SCompoundWidget
 
 	TSharedRef<ITableRow> GenerateHIDDeviceInfoRow(TSharedRef<FUnHIDEditorDeviceInfo> Item, const TSharedRef<STableViewBase>& OwnerTable)
 	{
+		const TMap<int64, FUnHIDEditorHUTUsagePage>& HUTMap = GetHUTMap();
+
 		return SNew(STableRow<TSharedRef<FUnHIDEditorDeviceInfo>>, OwnerTable)
 			[
 				SNew(SHorizontalBox)
@@ -458,13 +603,13 @@ class SUnHIDDashboard : public SCompoundWidget
 					[
 						SNew(STextBlock).Text(FText::FromString(Item->DeviceInfo.Product))
 					]
-					+ SHorizontalBox::Slot().FillWidth(0.3)
+					+ SHorizontalBox::Slot().FillWidth(0.2)
 					[
 						SNew(STextBlock).Text(FText::FromString(FString::Printf(TEXT("%s (0x%02X)"), *UUnHIDBlueprintFunctionLibrary::UnHIDUsagePageToString(Item->DeviceInfo.UsagePage), Item->DeviceInfo.UsagePage)))
 					]
-					+ SHorizontalBox::Slot().FillWidth(0.1)
+					+ SHorizontalBox::Slot().FillWidth(0.2)
 					[
-						SNew(STextBlock).Text(FText::FromString(FString::Printf(TEXT("0x%02X"), Item->DeviceInfo.Usage)))
+						SNew(STextBlock).Text(FText::FromString(FString::Printf(TEXT("0x%02X (%s)"), Item->DeviceInfo.Usage, *HUTUsageToString(HUTMap, Item->DeviceInfo.UsagePage, Item->DeviceInfo.Usage))))
 					]
 			];
 	}
@@ -742,116 +887,68 @@ class SUnHIDHUT : public SCompoundWidget
 
 	void Construct(const FArguments& InArgs)
 	{
-		const FString PluginBaseDir = IPluginManager::Get().FindPlugin("UnHID")->GetBaseDir();
+		const TMap<int64, FUnHIDEditorHUTUsagePage>& HUTMap = GetHUTMap();
 
-		const FString HUTFilename = FPaths::Combine(PluginBaseDir, "Resources", "HidUsageTables.json");
-
-		TArray<uint8> HUTData;
-
-		if (!FFileHelper::LoadFileToArray(HUTData, *HUTFilename))
+		if (HUTMap.IsEmpty())
 		{
 			ChildSlot
 				[
-					SNew(STextBlock).Text(FText::FromString("Unable to open file HidUsageTables.json"))
+					SNew(STextBlock).Text(FText::FromString("Unable to open/parse file HidUsageTables.json"))
 				];
 		}
 		else
 		{
-			TSharedPtr<FJsonValue> RootValue;
-
-			FString HUTJsonString;
-
-			FFileHelper::BufferToString(HUTJsonString, HUTData.GetData(), HUTData.Num());
-
-			TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(HUTJsonString);
-			if (!FJsonSerializer::Deserialize(JsonReader, RootValue))
+			HUTUsagePages.Empty();
+			for (const TPair<int64, FUnHIDEditorHUTUsagePage>& UsagePagePair : HUTMap)
 			{
-				ChildSlot
-					[
-						SNew(STextBlock).Text(FText::FromString("Unable to parse HidUsageTables.json"))
-					];
+				HUTUsagePages.Add(MakeShared<int64>(UsagePagePair.Key));
 			}
-			else
-			{
-				TSharedPtr<FJsonObject> JsonRootObject = RootValue->AsObject();
-				if (!JsonRootObject)
-				{
-					ChildSlot
+
+			ChildSlot
+				[
+					SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot().FillWidth(0.5)
 						[
-							SNew(STextBlock).Text(FText::FromString("Invalid content for HidUsageTables.json"))
-						];
-				}
-				else
-				{
-					const TArray<TSharedPtr<FJsonValue>>* UsagePagesJsonArray;
-					if (!JsonRootObject->TryGetArrayField(TEXT("UsagePages"), UsagePagesJsonArray))
-					{
-						ChildSlot
-							[
-								SNew(STextBlock).Text(FText::FromString("Invalid UsagePages for HidUsageTables.json"))
-							];
-					}
-					else
-					{
-						HUTUsagePages.Empty();
-						for (const TSharedPtr<FJsonValue>& UsagePageJson : *UsagePagesJsonArray)
-						{
-							if (UsagePageJson.IsValid())
-							{
-								TSharedPtr<FJsonObject>* UsagePageObject = nullptr;
-								if (UsagePageJson->TryGetObject(UsagePageObject))
-								{
-									HUTUsagePages.Add(UsagePageObject->ToSharedRef());
-								}
-							}
-						}
-
-						ChildSlot
-							[
-								SNew(SHorizontalBox)
-									+ SHorizontalBox::Slot().FillWidth(0.5)
-									[
-										SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
-											+ SScrollBox::Slot()
-											[
-												SAssignNew(HUTUsagePagesListView, SListView<TSharedRef<FJsonObject>>).ListItemsSource(&HUTUsagePages)
-													.OnGenerateRow(this, &SUnHIDHUT::GenerateUsagePageRow)
-													.SelectionMode(ESelectionMode::Single).HeaderRow(
-														SNew(SHeaderRow)
-														+ SHeaderRow::Column("UsagePageHex")
-														.DefaultLabel(FText::FromString("Usage Page Id"))
-														.SortMode_Lambda([this] {return UsagePageHexSortMode; })
-														.OnSort(this, &SUnHIDHUT::SortUsagePage)
-														.FillWidth(0.1)
-														+ SHeaderRow::Column("UsagePageName")
-														.DefaultLabel(FText::FromString("Usage Page Name"))
-														.SortMode_Lambda([this] {return UsagePageNameSortMode; })
-														.OnSort(this, &SUnHIDHUT::SortUsagePage)
-														.FillWidth(0.9)
-													)
-													.OnSelectionChanged(this, &SUnHIDHUT::ChangeSelectedUsagePage)
-											]
-									]
-								+ SHorizontalBox::Slot().FillWidth(0.5)
-									[
-										SNew(SBorder).Padding(8)
-											[
-												SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
-													+ SScrollBox::Slot()
-													[
-														SAssignNew(UsagePageUsages, SVerticalBox)
-													]
-											]
-									]
-							];
-					}
-				}
-			}
+							SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
+								+ SScrollBox::Slot()
+								[
+									SAssignNew(HUTUsagePagesListView, SListView<TSharedRef<int64>>).ListItemsSource(&HUTUsagePages)
+										.OnGenerateRow(this, &SUnHIDHUT::GenerateUsagePageRow)
+										.SelectionMode(ESelectionMode::Single).HeaderRow(
+											SNew(SHeaderRow)
+											+ SHeaderRow::Column("UsagePageHex")
+											.DefaultLabel(FText::FromString("Usage Page Id"))
+											.SortMode_Lambda([this] {return UsagePageHexSortMode; })
+											.OnSort(this, &SUnHIDHUT::SortUsagePage)
+											.FillWidth(0.1)
+											+ SHeaderRow::Column("UsagePageName")
+											.DefaultLabel(FText::FromString("Usage Page Name"))
+											.SortMode_Lambda([this] {return UsagePageNameSortMode; })
+											.OnSort(this, &SUnHIDHUT::SortUsagePage)
+											.FillWidth(0.9)
+										)
+										.OnSelectionChanged(this, &SUnHIDHUT::ChangeSelectedUsagePage)
+								]
+						]
+					+ SHorizontalBox::Slot().FillWidth(0.5)
+						[
+							SNew(SBorder).Padding(8)
+								[
+									SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
+										+ SScrollBox::Slot()
+										[
+											SAssignNew(UsagePageUsages, SVerticalBox)
+										]
+								]
+						]
+				];
 		}
 	}
 
-	void ChangeSelectedUsagePage(TSharedPtr<FJsonObject> SelectedItem, ESelectInfo::Type SelectInfo)
+	void ChangeSelectedUsagePage(TSharedPtr<int64> SelectedItem, ESelectInfo::Type SelectInfo)
 	{
+		const TMap<int64, FUnHIDEditorHUTUsagePage>& HUTMap = GetHUTMap();
+
 		if (!UsagePageUsages.IsValid())
 		{
 			return;
@@ -864,41 +961,19 @@ class SUnHIDHUT : public SCompoundWidget
 			return;
 		}
 
-		const TArray<TSharedPtr<FJsonValue>>* UsagePageUsagesJsonArray;
-		if (!SelectedItem->TryGetArrayField(TEXT("UsageIds"), UsagePageUsagesJsonArray))
+		if (!HUTMap.Contains(*SelectedItem))
 		{
 			return;
 		}
 
-		for (const TSharedPtr<FJsonValue>& UsagePageUsagesJsonItem : *UsagePageUsagesJsonArray)
+		for (const TPair<int64, FUnHIDEditorHUTUsage>& Usage : HUTMap[*SelectedItem].UsageMap)
 		{
-			TSharedPtr<FJsonObject>* UsageObject = nullptr;
-			if (!UsagePageUsagesJsonItem->TryGetObject(UsageObject))
-			{
-				continue;
-			}
+			const FString UsageHex = FString::Printf(TEXT("0x%02X"), Usage.Key);
 
-			int32 UsageId;
-			FString UsageHex;
-			if (!(*UsageObject)->TryGetNumberField(TEXT("Id"), UsageId))
+			FString UsageName = "??";
+			if (!Usage.Value.Name.IsEmpty())
 			{
-				continue;
-			}
-			else
-			{
-				UsageHex = FString::Printf(TEXT("0x%02X"), UsageId);
-			}
-
-			FString UsageName;
-			if (!(*UsageObject)->TryGetStringField(TEXT("Name"), UsageName))
-			{
-				UsageName = "??";
-			}
-
-			TArray<FString> Kinds;
-			if (!(*UsageObject)->TryGetStringArrayField(TEXT("Kinds"), Kinds))
-			{
-				Kinds = {};
+				UsageName = Usage.Value.Name;
 			}
 
 			UsagePageUsages->AddSlot().AutoHeight()
@@ -914,7 +989,7 @@ class SUnHIDHUT : public SCompoundWidget
 						]
 						+ SHorizontalBox::Slot().FillWidth(0.2)
 						[
-							SNew(STextBlock).Text(FText::FromString("[" + FString::Join(Kinds, TEXT(", ")) + "]"))
+							SNew(STextBlock).Text(FText::FromString("[" + FString::Join(Usage.Value.Kinds, TEXT(", ")) + "]"))
 						]
 				];
 		}
@@ -922,44 +997,27 @@ class SUnHIDHUT : public SCompoundWidget
 
 	void SortUsagePage(EColumnSortPriority::Type Priority, const FName& ColumnId, EColumnSortMode::Type Mode)
 	{
+		const TMap<int64, FUnHIDEditorHUTUsagePage>& HUTMap = GetHUTMap();
+
 		if (ColumnId == "UsagePageHex")
 		{
 			UsagePageHexSortMode = Mode;
 
-			HUTUsagePages.Sort([Mode](const TSharedRef<FJsonObject> A, const TSharedRef<FJsonObject> B)
+			HUTUsagePages.Sort([Mode](const TSharedRef<int64> A, const TSharedRef<int64> B)
 				{
-					int32 UsagePageA;
-					if (!A->TryGetNumberField(TEXT("Id"), UsagePageA))
-					{
-						UsagePageA = -1;
-					}
-
-					int32 UsagePageB;
-					if (!B->TryGetNumberField(TEXT("Id"), UsagePageB))
-					{
-						UsagePageB = -1;
-					}
-
-					return Mode == EColumnSortMode::Type::Descending ? UsagePageA > UsagePageB : UsagePageA < UsagePageB;
+					return Mode == EColumnSortMode::Type::Descending ? *A > *B : *A < *B;
 				});
 		}
 		else if (ColumnId == "UsagePageName")
 		{
 			UsagePageNameSortMode = Mode;
 
-			HUTUsagePages.Sort([Mode](const TSharedRef<FJsonObject> A, const TSharedRef<FJsonObject> B)
+			HUTUsagePages.Sort([Mode, &HUTMap](const TSharedRef<int64> A, const TSharedRef<int64> B)
 				{
-					FString UsagePageA;
-					if (!A->TryGetStringField(TEXT("Name"), UsagePageA))
-					{
-						UsagePageA = "";
-					}
+					FString UsagePageA = HUTMap[*A].Name;
 
-					FString UsagePageB;
-					if (!B->TryGetStringField(TEXT("Name"), UsagePageB))
-					{
-						UsagePageB = "";
-					}
+					FString UsagePageB = HUTMap[*B].Name;
+
 					return Mode == EColumnSortMode::Type::Descending ? UsagePageA > UsagePageB : UsagePageA < UsagePageB;
 				});
 		}
@@ -970,23 +1028,16 @@ class SUnHIDHUT : public SCompoundWidget
 		}
 	}
 
-	TSharedRef<ITableRow> GenerateUsagePageRow(TSharedRef<FJsonObject> Item, const TSharedRef<STableViewBase>& OwnerTable)
+	TSharedRef<ITableRow> GenerateUsagePageRow(TSharedRef<int64> Item, const TSharedRef<STableViewBase>& OwnerTable)
 	{
-		int32 UsagePageId;
-		FString UsagePageHex;
-		if (!Item->TryGetNumberField(TEXT("Id"), UsagePageId))
-		{
-			UsagePageHex = "??";
-		}
-		else
-		{
-			UsagePageHex = FString::Printf(TEXT("0x%02X"), UsagePageId);
-		}
+		const TMap<int64, FUnHIDEditorHUTUsagePage>& HUTMap = GetHUTMap();
 
-		FString UsagePageName;
-		if (!Item->TryGetStringField(TEXT("Name"), UsagePageName))
+		const FString UsagePageHex = FString::Printf(TEXT("0x%02X"), *Item);
+
+		FString UsagePageName = "??";
+		if (HUTMap.Contains(*Item) && !HUTMap[*Item].Name.IsEmpty())
 		{
-			UsagePageName = "??";
+			UsagePageName = HUTMap[*Item].Name;
 		}
 
 		return SNew(STableRow<TSharedRef<FJsonObject>>, OwnerTable)
@@ -1004,8 +1055,8 @@ class SUnHIDHUT : public SCompoundWidget
 	}
 
 protected:
-	TArray<TSharedRef<FJsonObject>> HUTUsagePages;
-	TSharedPtr<SListView<TSharedRef<FJsonObject>>> HUTUsagePagesListView;
+	TArray<TSharedRef<int64>> HUTUsagePages;
+	TSharedPtr<SListView<TSharedRef<int64>>> HUTUsagePagesListView;
 
 	EColumnSortMode::Type UsagePageHexSortMode = EColumnSortMode::Type::None;
 	EColumnSortMode::Type UsagePageNameSortMode = EColumnSortMode::Type::None;
