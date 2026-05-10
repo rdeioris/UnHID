@@ -40,7 +40,57 @@ NOTE: operating systems have various protection mechanisms for keyboards and mic
 
 If you have a gamepad or joystick connected to your system, those are good candidates for a check:
 
-### Step1: Opening a Device
+### Step1: Enumerating and Opening a Device
+
+| Page ID | Page Name |
+| :--- | :--- |
+| 0x00 | Undefined |
+| 0x01 | Generic Desktop Page |
+| 0x02 | Simulation Controls Page |
+| 0x03 | VR Controls Page |
+| 0x04 | Sport Controls Page |
+| 0x05 | Game Controls Page |
+| 0x06 | Generic Device Controls Page |
+| 0x07 | Keyboard/Keypad Page |
+| 0x08 | LED Page |
+| 0x09 | Button Page |
+| 0x0A | Ordinal Page |
+| 0x0B | Telephony Device Page |
+| 0x0C | Consumer Page |
+| 0x0D | Digitizers Page |
+| 0x0E | Haptics Page |
+| 0x0F | Physical Input Device Page |
+| 0x10 | Unicode Page |
+| 0x11 | SoC Page |
+| 0x12 |Eye and Head Trackers Page |
+| 0x13 | Reserved |
+| 0x14 | Auxiliary Display Page |
+| 0x15-0x1F | Reserved |
+| 0x20 | Sensors Page |
+| 0x21-0x3F | Reserved |
+| 0x40 | Medical Instrument Page |
+| 0x41 | Braille Display Page |
+| 0x42-0x58 | Reserved |
+| 0x59 | Lighting And Illumination Page |
+| 0x5A-0x7F | Reserved |
+| 0x80 | Monitor Page |
+| 0x81 Monitor Enumerated Page |
+| 0x82 | VESA Virtual Controls Page |
+| 0x83 | Reserved |
+| 0x84 | Power Page |
+| 85 Battery System Page (0x85) 31
+86-8B Reserved
+8C Barcode Scanner Page (0x8C) 32
+8D Scales Page (0x8D) 33
+8E Magnetic Stripe Reader Page (0x8E) 34
+8F-8F Reserved
+90 Camera Control Page (0x90) 35
+91 Arcade Page (0x91) 36
+92 Gaming Device Page (0x92) 37
+93-F1CF Reserved
+F1D0 FIDO Alliance Page (0xF1D0) 38
+F1D1-FEFF Reserved
+FF00-FFFF Vendor-defined
 
 ### Step2: Parsing Reports
 
