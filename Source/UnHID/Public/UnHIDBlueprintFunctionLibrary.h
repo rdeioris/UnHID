@@ -139,6 +139,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Virtual InputDevice Button Release"), Category = "UnHID")
 	static void UnHIDVirtualInputDeviceButtonRelease(const int32 ControllerId, const uint8 ButtonId);
 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Virtual InputDevice Set State", AutoCreateRefTerm = "Axis,Buttons"), Category = "UnHID")
+	static void UnHIDVirtualInputDeviceSetState(const int32 ControllerId, const TMap<uint8, float>& Axis, const TMap<uint8, bool>& Buttons);
+
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "UnHID Parse Bitmask from Bytes"), Category = "UnHID")
 	static TArray<bool> UnHIDParseBitmaskFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset, const int64 BitSize);
 

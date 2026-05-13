@@ -157,6 +157,26 @@ void FUnHIDModule::VirtualInputDeviceButtonRelease(const int32 ControllerId, con
 	UnHIDInputDevice->ButtonRelease(ControllerId, ButtonCache[ButtonId]);
 }
 
+void FUnHIDModule::VirtualInputDeviceSetState(const int32 ControllerId, const TMap<uint8, float>& Axis, const TMap<uint8, bool>& Buttons)
+{
+	for (const TPair<uint8, float>& Pair : Axis)
+	{
+		VirtualInputDeviceSetAxis(ControllerId, Pair.Key, Pair.Value);
+	}
+
+	for (const TPair<uint8, bool>& Pair : Buttons)
+	{
+		if (Pair.Value)
+		{
+			VirtualInputDeviceButtonPress(ControllerId, Pair.Key);
+		}
+		else
+		{
+			VirtualInputDeviceButtonRelease(ControllerId, Pair.Key);
+		}
+	}
+}
+
 #undef LOCTEXT_NAMESPACE
 
 IMPLEMENT_MODULE(FUnHIDModule, UnHID)

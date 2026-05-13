@@ -26,6 +26,8 @@ public:
 	void VirtualInputDeviceButtonPress(const int32 ControllerId, const uint8 ButtonId);
 	void VirtualInputDeviceButtonRelease(const int32 ControllerId, const uint8 ButtonId);
 
+	void VirtualInputDeviceSetState(const int32 ControllerId, const TMap<uint8, float>& Axis, const TMap<uint8, bool>& Buttons);
+
 protected:
 
 	TSharedPtr<class FUnHIDInputDevice> UnHIDInputDevice;

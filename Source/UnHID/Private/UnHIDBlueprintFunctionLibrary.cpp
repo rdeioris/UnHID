@@ -10,6 +10,8 @@ THIRD_PARTY_INCLUDES_END
 #include "UnHID.h"
 #include "UnHIDDevice.h"
 
+#include "Algo/Reverse.h"
+
 
 TArray<FUnHIDDeviceInfo> UUnHIDBlueprintFunctionLibrary::UnHIDEnumerate()
 {
@@ -436,6 +438,7 @@ TArray<uint8> UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToBytes(const FStrin
 int32 UUnHIDBlueprintFunctionLibrary::UnHIDHexStringToInt32(const FString& HexString)
 {
 	TArray<uint8> Bytes = UnHIDHexStringToBytes(HexString);
+	Algo::Reverse(Bytes);
 	if (Bytes.Num() < 4)
 	{
 		Bytes.AddZeroed(4 - Bytes.Num());
@@ -766,6 +769,11 @@ void UUnHIDBlueprintFunctionLibrary::UnHIDVirtualInputDeviceButtonPress(const in
 void UUnHIDBlueprintFunctionLibrary::UnHIDVirtualInputDeviceButtonRelease(const int32 ControllerId, const uint8 ButtonId)
 {
 	FUnHIDModule::Get().VirtualInputDeviceButtonRelease(ControllerId, ButtonId);
+}
+
+void UUnHIDBlueprintFunctionLibrary::UnHIDVirtualInputDeviceSetState(const int32 ControllerId, const TMap<uint8, float>& Axis, const TMap<uint8, bool>& Buttons)
+{
+	FUnHIDModule::Get().VirtualInputDeviceSetState(ControllerId, Axis, Buttons);
 }
 
 TArray<bool> UUnHIDBlueprintFunctionLibrary::UnHIDParseBitmaskFromBytes(const TArray<uint8>& Bytes, const int64 BitOffset, const int64 BitSize)
